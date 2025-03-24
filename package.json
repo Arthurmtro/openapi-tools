@@ -1,0 +1,24 @@
+{
+  "name": "openapi-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI tools for client and server development",
+  "author": "Arthur Monteiro",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "biome check .",
+    "format": "biome format . --write"
+  },
+  "packageManager": "pnpm@10.6.1",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.13.13",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.4.0",
+    "turbo": "^2.4.4",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  }
+}

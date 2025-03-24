@@ -1,0 +1,49 @@
+{
+  "name": "@openapi-tools/client",
+  "version": "0.1.0",
+  "description": "Lightweight typed API client generator for OpenAPI specifications",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arthurmtro/openapi-tools.git",
+    "directory": "packages/client"
+  },
+  "keywords": [
+    "openapi",
+    "api",
+    "client",
+    "typescript",
+    "generator"
+  ],
+  "bin": {
+    "openapi-client": "./bin/openapi-client.js"
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --no-dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@openapi-tools/common": "workspace:*",
+    "axios": "^1.8.4",
+    "commander": "^11.1.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.18.4",
+    "@types/js-yaml": "^4.0.9"
+  }
+}

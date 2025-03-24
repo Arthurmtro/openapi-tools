@@ -1,0 +1,13 @@
+# Build output
+dist/
+build/
+
+# Generated code (especially relevant for the client package)
+generated/
+
+# Package specific cache
+.cache/
+
+# Package lock files (when using pnpm workspace)
+package-lock.json
+yarn.lock
