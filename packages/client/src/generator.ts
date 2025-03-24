@@ -32,9 +32,7 @@ export class ClientGenerator {
    */
   private detectFormat(specPath: string): 'json' | 'yaml' {
     const ext = path.extname(specPath).toLowerCase();
-    if (ext === '.json') return 'json';
-    if (ext === '.yaml' || ext === '.yml') return 'yaml';
-    return 'json';
+    return (ext === '.yaml' || ext === '.yml') ? 'yaml' : 'json';
   }
 
   /**
@@ -120,30 +118,12 @@ export class ClientGenerator {
   }
 
   /**
-   * Generates the client wrapper
+   * Generates the client wrapper and index files
    */
   private async generateClientWrapper(
     generatedDir: string,
     apiGroups: Array<{ originalName: string; formattedName: string }>
   ): Promise<void> {
-    // Generate client file
-    const clientFilePath = path.join(this.options.outputDir, 'client.ts');
-    const clientContent = this.generateClientContent(generatedDir, apiGroups);
-    await fs.promises.writeFile(clientFilePath, clientContent);
-
-    // Generate index file
-    const indexFilePath = path.join(this.options.outputDir, 'index.ts');
-    const indexContent = generateIndexTemplate();
-    await fs.promises.writeFile(indexFilePath, indexContent);
-  }
-
-  /**
-   * Generates the content for the client.ts file
-   */
-  private generateClientContent(
-    generatedDir: string,
-    apiGroups: Array<{ originalName: string; formattedName: string }>
-  ): string {
     // Calculate relative path to generated code
     const relativeGeneratedPath = path
       .relative(path.dirname(path.join(this.options.outputDir, 'client.ts')), generatedDir)
@@ -153,45 +133,79 @@ export class ClientGenerator {
       ? relativeGeneratedPath
       : `./${relativeGeneratedPath}`;
 
-    // Create imports for all API classes
-    const imports = apiGroups
+    // Generate client file
+    const clientFilePath = path.join(this.options.outputDir, 'client.ts');
+    const clientContent = generateClientTemplate(
+      importPath,
+      this.generateImports(apiGroups, importPath),
+      this.generateApiReExports(apiGroups, importPath),
+      this.generateApiClientsEntries(apiGroups),
+      this.generateApiEndpointsProps(apiGroups)
+    );
+    await fs.promises.writeFile(clientFilePath, clientContent);
+
+    // Generate index file
+    const indexFilePath = path.join(this.options.outputDir, 'index.ts');
+    const indexContent = generateIndexTemplate();
+    await fs.promises.writeFile(indexFilePath, indexContent);
+  }
+
+  /**
+   * Creates imports for all API classes
+   */
+  private generateImports(
+    apiGroups: Array<{ originalName: string; formattedName: string }>,
+    importPath: string
+  ): string {
+    return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
         return `import { ${className} } from '${importPath}/apis/${group.originalName}-api';`;
       })
       .join('\n');
+  }
 
-    // Create API_CLIENTS object entries
-    const apiClientsEntries = apiGroups
+  /**
+   * Creates API_CLIENTS object entries
+   */
+  private generateApiClientsEntries(
+    apiGroups: Array<{ originalName: string; formattedName: string }>
+  ): string {
+    return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
         return `  ${group.formattedName}: ${className},`;
       })
       .join('\n');
+  }
 
-    // Create ApiEndpoints type properties
-    const apiEndpointsProps = apiGroups
+  /**
+   * Creates ApiEndpoints type properties
+   */
+  private generateApiEndpointsProps(
+    apiGroups: Array<{ originalName: string; formattedName: string }>
+  ): string {
+    return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
         return `  ${group.formattedName}: InstanceType<typeof ${className}>;`;
       })
       .join('\n');
+  }
 
-    // Create API re-exports
-    const apiReExports = apiGroups
+  /**
+   * Creates API re-exports
+   */
+  private generateApiReExports(
+    apiGroups: Array<{ originalName: string; formattedName: string }>,
+    importPath: string
+  ): string {
+    return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
         return `export { ${className} } from '${importPath}/apis/${group.originalName}-api';`;
       })
       .join('\n');
-
-    return generateClientTemplate(
-      importPath,
-      imports,
-      apiReExports,
-      apiClientsEntries,
-      apiEndpointsProps
-    );
   }
 
   /**
