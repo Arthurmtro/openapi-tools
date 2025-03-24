@@ -1,44 +1,37 @@
 import type { ApiClientOptions as BaseApiClientOptions } from '@openapi-tools/common';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
+/**
+ * Extended API client options with authentication support
+ */
 export interface ApiClientOptions extends BaseApiClientOptions {
   auth?: string | (() => string | Promise<string>);
 }
 
-// Define a more flexible endpoint type
+/**
+ * Generic API endpoint interface
+ */
 export interface ApiEndpoint {
   [methodName: string]: (...args: unknown[]) => Promise<unknown>;
 }
 
-// Constructor type with proper typing relationship to its instances
+/**
+ * Constructor type for API endpoints
+ */
 export interface ApiEndpointConstructor {
   new (configuration?: unknown, basePath?: string, axiosInstance?: AxiosInstance): ApiEndpoint;
 }
 
-// Revised endpoints mapping type
+/**
+ * Map of API endpoints
+ */
 export interface ApiEndpoints {
-  [key: string]: ApiEndpointConstructor | ApiEndpoint;
+  [key: string]: ApiEndpoint;
 }
 
-// Interface for an API endpoint class constructor
-export interface ApiEndpointClass {
-  new (
-    configuration?: unknown,
-    basePath?: string,
-    axiosInstance?: AxiosInstance
-  ): ApiEndpointInstance;
-}
-
-// Interface for an instantiated API endpoint
-export interface ApiEndpointInstance {
-  [methodName: string]: (...args: unknown[]) => Promise<AxiosResponse<unknown>>;
-}
-
-export interface HttpClient {
-  request<TResponse>(config: AxiosRequestConfig): Promise<AxiosResponse<TResponse>>;
-  getInstance(): AxiosInstance;
-}
-
+/**
+ * Options for the OpenAPI client generator
+ */
 export interface GeneratorOptions {
   specPath: string;
   outputDir: string;
