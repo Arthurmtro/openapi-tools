@@ -15,12 +15,18 @@ import type {
  */
 export class ApiClient<T extends ApiEndpoints> {
   private http: AxiosInstance;
-  private endpoints: T;
+  private endpoints!: T;
   private options: ApiClientOptions;
   private interceptorIds: number[] = [];
+  private endpointInstances: Record<string, any> = {};
 
   constructor(endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>, options: ApiClientOptions = {}) {
-    this.options = options;
+    this.options = {
+      requestInterceptors: [],
+      responseInterceptors: [],
+      errorInterceptors: [],
+      ...options
+    };
     this.http = this.createHttpClient();
     this.setupInterceptors();
     this.endpoints = this.initializeEndpoints(endpoints) as T;
@@ -141,11 +147,39 @@ export class ApiClient<T extends ApiEndpoints> {
 
     for (const [key, EndpointClass] of Object.entries(endpoints)) {
       if (typeof EndpointClass === 'function') {
-        initialized[key as keyof T] = new (EndpointClass as ApiEndpointConstructor)(
+        // Store the original endpoint instance
+        const instance = new (EndpointClass as ApiEndpointConstructor)(
           undefined,
           this.options.baseUrl,
           this.http
-        ) as T[keyof T];
+        );
+        
+        this.endpointInstances[key] = instance;
+        
+        // Create a proxy for each endpoint to intercept method calls
+        initialized[key as keyof T] = new Proxy(instance, {
+          get: (target, prop: string | symbol) => {
+            const propKey = prop.toString();
+            // Use type assertion to handle both string and symbol properties
+            const value = (target as any)[propKey];
+            
+            if (typeof value === 'function' && propKey !== 'constructor') {
+              // Return a function that will use the current HTTP client
+              return (...args: any[]) => {
+                // Override the axios instance used by the endpoint
+                if (typeof (target as any).setAxiosInstance === 'function') {
+                  (target as any).setAxiosInstance(this.http);
+                } else {
+                  // If setAxiosInstance doesn't exist, we need to patch the request method
+                  this.patchRequestMethod(target);
+                }
+                
+                return value.apply(target, args);
+              };
+            }
+            return value;
+          }
+        }) as T[keyof T];
       } else {
         initialized[key as keyof T] = EndpointClass as T[keyof T];
       }
@@ -155,13 +189,45 @@ export class ApiClient<T extends ApiEndpoints> {
   }
 
   /**
+   * Patch the request method of an endpoint to use our HTTP client
+   */
+  private patchRequestMethod(endpoint: any): void {
+    // Store the original request method if it exists
+    if (typeof endpoint.request === 'function' && !endpoint._originalRequest) {
+      endpoint._originalRequest = endpoint.request;
+      
+      // Override the request method to use our HTTP client
+      endpoint.request = (config: AxiosRequestConfig) => {
+        return this.http.request(config);
+      };
+    }
+  }
+
+  /**
    * Reconfigure the client with new options
    */
   public configure(options: ApiClientOptions): void {
-    Object.assign(this.options, options);
+    // Preserve existing interceptors unless explicitly overridden
+    this.options = {
+      ...this.options,
+      ...options,
+      requestInterceptors: options.requestInterceptors || this.options.requestInterceptors,
+      responseInterceptors: options.responseInterceptors || this.options.responseInterceptors,
+      errorInterceptors: options.errorInterceptors || this.options.errorInterceptors
+    };
+    
+    // Create a new HTTP client with updated options
     this.http = this.createHttpClient();
     this.setupInterceptors();
-    this.endpoints = this.initializeEndpoints(this.endpoints);
+    
+    // Update all endpoint instances to use the new HTTP client
+    for (const instance of Object.values(this.endpointInstances)) {
+      if (typeof instance.setAxiosInstance === 'function') {
+        instance.setAxiosInstance(this.http);
+      } else {
+        this.patchRequestMethod(instance);
+      }
+    }
   }
 
   /**
@@ -234,7 +300,7 @@ export class ApiClient<T extends ApiEndpoints> {
  * @param options - Additional client options
  * @returns Proxied client with direct access to API endpoints and client methods
  */
-export function createApiClient<T extends ApiEndpoints & object>(
+export function createApiClient<T extends ApiEndpoints>(
   endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>,
   baseUrl = '',
   options = {}
@@ -245,35 +311,44 @@ export function createApiClient<T extends ApiEndpoints & object>(
   });
 
   // Create a proxy that handles both API endpoints and client methods
-  return new Proxy({} as T & ApiClientMethods, {
-    get: (_, prop) => {
+  const proxy = new Proxy({} as any, {
+    get: (_, prop: string | symbol) => {
+      const propKey = prop.toString();
+      
       // Handle client methods
-      if (prop === 'configure') {
+      if (propKey === 'configure') {
         return (newOptions: ApiClientOptions) => client.configure(newOptions);
       }
-      if (prop === 'getBaseUrl') {
+      if (propKey === 'getBaseUrl') {
         return () => client.getBaseUrl();
       }
-      if (prop === 'getHttpClient') {
+      if (propKey === 'getHttpClient') {
         return () => client.getHttpClient();
       }
-      if (prop === 'addRequestInterceptor') {
+      if (propKey === 'addRequestInterceptor') {
         return (interceptor: RequestInterceptor) => client.addRequestInterceptor(interceptor);
       }
-      if (prop === 'addResponseInterceptor') {
+      if (propKey === 'addResponseInterceptor') {
         return (interceptor: ResponseInterceptor) => client.addResponseInterceptor(interceptor);
       }
-      if (prop === 'addErrorInterceptor') {
+      if (propKey === 'addErrorInterceptor') {
         return (interceptor: ErrorInterceptor) => client.addErrorInterceptor(interceptor);
       }
 
       // Handle API endpoints
-      const key = prop as keyof T;
-      if (key in client.api) {
-        return client.api[key];
+      // Convert the property to a string to handle both string and symbol keys
+      const stringKey = propKey.replace(/^Symbol\((.*)\)$/, '$1');
+      
+      // Check if the key exists in the API endpoints
+      for (const key in client.api) {
+        if (key === stringKey) {
+          return client.api[key as keyof T];
+        }
       }
 
       return undefined;
     }
   });
+
+  return proxy as T & ApiClientMethods;
 }

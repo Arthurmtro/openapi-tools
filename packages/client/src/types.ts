@@ -1,11 +1,47 @@
-import type { ApiClientOptions as BaseApiClientOptions } from '@openapi-tools/common';
-import type { AxiosInstance } from 'axios';
+import type { ApiClientOptions as CommonApiClientOptions } from '@openapi-tools/common';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 /**
- * Extended API client options with authentication support
+ * Request interceptor function type
+ * Allows modifying or logging requests before they are sent
  */
-export interface ApiClientOptions extends BaseApiClientOptions {
+export type RequestInterceptor = (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
+
+/**
+ * Response interceptor function type
+ * Allows modifying or logging responses before they are returned to the caller
+ */
+export type ResponseInterceptor = (response: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>;
+
+/**
+ * Error interceptor function type
+ * Allows handling errors from requests or responses
+ */
+export type ErrorInterceptor = (error: any) => any | Promise<any>;
+
+/**
+ * Extended API client options with authentication and interceptor support
+ */
+export interface ApiClientOptions extends CommonApiClientOptions {
+  /**
+   * Authentication token or function that returns a token
+   */
   auth?: string | (() => string | Promise<string>);
+  
+  /**
+   * Request interceptors to be applied before sending requests
+   */
+  requestInterceptors?: Array<RequestInterceptor>;
+  
+  /**
+   * Response interceptors to be applied after receiving responses
+   */
+  responseInterceptors?: Array<ResponseInterceptor>;
+  
+  /**
+   * Error interceptors to be applied when requests or responses fail
+   */
+  errorInterceptors?: Array<ErrorInterceptor>;
 }
 
 /**
@@ -27,6 +63,41 @@ export interface ApiEndpointConstructor {
  */
 export interface ApiEndpoints {
   [key: string]: ApiEndpoint;
+}
+
+/**
+ * Methods available on the API client
+ */
+export interface ApiClientMethods {
+  /**
+   * Reconfigure the client with new options
+   */
+  configure: (options: ApiClientOptions) => void;
+  
+  /**
+   * Get the base URL
+   */
+  getBaseUrl: () => string | undefined;
+  
+  /**
+   * Get the HTTP client instance
+   */
+  getHttpClient: () => AxiosInstance;
+  
+  /**
+   * Add a request interceptor
+   */
+  addRequestInterceptor: (interceptor: RequestInterceptor) => number;
+  
+  /**
+   * Add a response interceptor
+   */
+  addResponseInterceptor: (interceptor: ResponseInterceptor) => number;
+  
+  /**
+   * Add an error interceptor
+   */
+  addErrorInterceptor: (interceptor: ErrorInterceptor) => void;
 }
 
 /**
