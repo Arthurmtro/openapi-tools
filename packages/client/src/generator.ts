@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { formatName } from '@openapi-tools/common';
+import { formatName } from '@arthurmtro/openapi-tools-common';
 import {
   generateApisIndexTemplate,
   generateClientTemplate,

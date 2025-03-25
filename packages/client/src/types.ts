@@ -1,4 +1,4 @@
-import type { ApiClientOptions as CommonApiClientOptions } from '@openapi-tools/common';
+import type { ApiClientOptions as CommonApiClientOptions } from '@arthurmtro/openapi-tools-common';
 import type {
   AxiosInstance,
   AxiosRequestConfig,

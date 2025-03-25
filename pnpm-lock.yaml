@@ -35,7 +35,7 @@ importers:
 
   packages/client:
     dependencies:
-      '@openapi-tools/common':
+      '@arthurmtro/openapi-tools-common':
         specifier: workspace:*
         version: link:../common
       axios:

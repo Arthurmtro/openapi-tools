@@ -1,23 +1,25 @@
 {
-  "name": "@openapi-tools/client",
+  "name": "@arthurmtro/openapi-tools-client",
   "version": "0.1.0",
   "description": "Lightweight typed API client generator for OpenAPI specifications",
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "author": "Arthur Monteiro",
   "files": ["dist", "bin"],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arthurmtro/openapi-tools.git",
+    "url": "git+https://github.com/arthurmtro/openapi-tools.git",
     "directory": "packages/client"
   },
   "keywords": ["openapi", "api", "client", "typescript", "generator"],
   "bin": {
-    "openapi-client": "./bin/openapi-client.js"
+    "openapi-client": "bin/openapi-client.js"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -28,7 +30,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@openapi-tools/common": "workspace:*",
+    "@arthurmtro/openapi-tools-common": "workspace:*",
     "axios": "^1.8.4",
     "commander": "^11.1.0",
     "js-yaml": "^4.1.0"

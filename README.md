@@ -6,7 +6,7 @@ A collection of tools for working with OpenAPI specifications in both client and
 
 - [@openapi-tools/client](./packages/client) - Client-side OpenAPI tools for consuming REST APIs
 - [@openapi-tools/server](./packages/server) - Server-side OpenAPI tools with WebSocket support
-- [@openapi-tools/common](./packages/common) - Shared utilities for OpenAPI tools
+- [@arthurmtro/openapi-tools-common](./packages/common) - Shared utilities for OpenAPI tools
 
 ## Development
 

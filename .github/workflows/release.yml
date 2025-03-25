@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       version_type:
-        description: 'Version type (patch, minor, major)'
+        description: "Version type (patch, minor, major)"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
           - minor
           - major
       changelog:
-        description: 'Changelog text'
+        description: "Changelog text"
         required: true
         type: string
 
@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -77,8 +77,8 @@ jobs:
           CHANGESET_ID=$(openssl rand -hex 8)
           cat > .changeset/$CHANGESET_ID.md << EOL
           ---
-          "@openapi-tools/client": ${{ github.event.inputs.version_type }}
-          "@openapi-tools/common": ${{ github.event.inputs.version_type }}
+          "@arthurmtro/openapi-tools-client": ${{ github.event.inputs.version_type }}
+          "@arthurmtro/openapi-tools-common": ${{ github.event.inputs.version_type }}
           ---
 
           ${{ github.event.inputs.changelog }}

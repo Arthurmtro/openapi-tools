@@ -1,5 +1,5 @@
 {
-  "name": "@openapi-tools/common",
+  "name": "@arthurmtro/openapi-tools-common",
   "version": "0.1.0",
   "description": "Shared utilities for OpenAPI tools",
   "main": "dist/index.js",

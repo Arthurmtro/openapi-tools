@@ -1,5 +1,5 @@
 {
-  "name": "openapi-tools",
+  "name": "@arthurmtro/openapi-tools",
   "version": "0.1.0",
   "private": true,
   "description": "OpenAPI tools for client and server development",
