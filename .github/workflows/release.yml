@@ -84,14 +84,14 @@ jobs:
           EOL
 
       - name: Version packages
-        run: pnpm version
+        run: pnpm changeset version
 
       - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "chore: release version ${{ github.event.inputs.version_type }} [skip ci]"
+          git commit -m "chore: release version bump [skip ci]"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
