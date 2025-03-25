@@ -1,11 +1,21 @@
-name: Release
+name: Manual Release
 
 on:
-  push:
-    branches:
-      - main
-
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      changelog:
+        description: 'Changelog text'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -13,7 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
     steps:
       - name: Checkout repository
@@ -62,14 +71,37 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
+      - name: Create changeset file
+        run: |
+          mkdir -p .changeset
+          CHANGESET_ID=$(openssl rand -hex 8)
+          cat > .changeset/$CHANGESET_ID.md << EOL
+          ---
+          "@openapi-tools/client": ${{ github.event.inputs.version_type }}
+          "@openapi-tools/common": ${{ github.event.inputs.version_type }}
+          ---
+
+          ${{ github.event.inputs.changelog }}
+          EOL
+
+      - name: Version packages
+        run: pnpm version
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "chore: release version ${{ github.event.inputs.version_type }} [skip ci]"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
         with:
-          publish: pnpm release
-          commit: "chore: release packages"
-          title: "chore: release packages"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Publish to npm
+        run: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
