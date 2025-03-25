@@ -78,7 +78,6 @@ jobs:
           cat > .changeset/$CHANGESET_ID.md << EOL
           ---
           "@arthurmtro/openapi-tools-client": ${{ github.event.inputs.version_type }}
-          "@arthurmtro/openapi-tools-common": ${{ github.event.inputs.version_type }}
           ---
 
           ${{ github.event.inputs.changelog }}
