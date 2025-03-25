@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
+    "composite": false,
     "emitDeclarationOnly": true
   },
   "include": ["src/**/*.ts"],
