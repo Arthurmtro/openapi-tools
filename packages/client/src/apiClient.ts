@@ -1,13 +1,18 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import type { 
-  ApiClientOptions, 
-  ApiEndpoint, 
-  ApiEndpointConstructor, 
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
+import type {
+  ApiClientMethods,
+  ApiClientOptions,
+  ApiEndpoint,
+  ApiEndpointConstructor,
   ApiEndpoints,
+  ErrorInterceptor,
   RequestInterceptor,
   ResponseInterceptor,
-  ErrorInterceptor,
-  ApiClientMethods
 } from './types';
 
 /**
@@ -19,7 +24,10 @@ export class ApiClient<T extends ApiEndpoints> {
   private options: ApiClientOptions;
   private interceptorIds: number[] = [];
 
-  constructor(endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>, options: ApiClientOptions = {}) {
+  constructor(
+    endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>,
+    options: ApiClientOptions = {},
+  ) {
     this.options = options;
     this.http = this.createHttpClient();
     this.setupInterceptors();
@@ -44,14 +52,11 @@ export class ApiClient<T extends ApiEndpoints> {
   private setupInterceptors(): void {
     // Clear any existing interceptors
     this.clearInterceptors();
-    
+
     // Add request interceptors
     if (this.options.requestInterceptors?.length) {
       for (const interceptor of this.options.requestInterceptors) {
-        const id = this.http.interceptors.request.use(
-          interceptor,
-          this.createErrorHandler()
-        );
+        const id = this.http.interceptors.request.use(interceptor, this.createErrorHandler());
         this.interceptorIds.push(id);
       }
     }
@@ -59,10 +64,7 @@ export class ApiClient<T extends ApiEndpoints> {
     // Add response interceptors
     if (this.options.responseInterceptors?.length) {
       for (const interceptor of this.options.responseInterceptors) {
-        const id = this.http.interceptors.response.use(
-          interceptor,
-          this.createErrorHandler()
-        );
+        const id = this.http.interceptors.response.use(interceptor, this.createErrorHandler());
         this.interceptorIds.push(id);
       }
     }
@@ -71,7 +73,7 @@ export class ApiClient<T extends ApiEndpoints> {
     if (this.options.auth) {
       const id = this.http.interceptors.request.use(
         this.createAuthInterceptor(),
-        this.createErrorHandler()
+        this.createErrorHandler(),
       );
       this.interceptorIds.push(id);
     }
@@ -86,9 +88,8 @@ export class ApiClient<T extends ApiEndpoints> {
         return config;
       }
 
-      const token = typeof this.options.auth === 'function'
-        ? await this.options.auth()
-        : this.options.auth;
+      const token =
+        typeof this.options.auth === 'function' ? await this.options.auth() : this.options.auth;
 
       if (token) {
         // Set the Authorization header
@@ -106,7 +107,7 @@ export class ApiClient<T extends ApiEndpoints> {
     return async (error: unknown): Promise<unknown> => {
       if (this.options.errorInterceptors?.length) {
         let processedError = error;
-        
+
         for (const errorInterceptor of this.options.errorInterceptors) {
           try {
             processedError = await errorInterceptor(processedError);
@@ -114,10 +115,10 @@ export class ApiClient<T extends ApiEndpoints> {
             processedError = e;
           }
         }
-        
+
         return Promise.reject(processedError);
       }
-      
+
       return Promise.reject(error);
     };
   }
@@ -144,7 +145,7 @@ export class ApiClient<T extends ApiEndpoints> {
         initialized[key as keyof T] = new (EndpointClass as ApiEndpointConstructor)(
           undefined,
           this.options.baseUrl,
-          this.http
+          this.http,
         ) as T[keyof T];
       } else {
         initialized[key as keyof T] = EndpointClass as T[keyof T];
@@ -170,13 +171,10 @@ export class ApiClient<T extends ApiEndpoints> {
   public addRequestInterceptor(interceptor: RequestInterceptor): number {
     this.options.requestInterceptors = this.options.requestInterceptors || [];
     this.options.requestInterceptors.push(interceptor);
-    
-    const id = this.http.interceptors.request.use(
-      interceptor,
-      this.createErrorHandler()
-    );
+
+    const id = this.http.interceptors.request.use(interceptor, this.createErrorHandler());
     this.interceptorIds.push(id);
-    
+
     return id;
   }
 
@@ -186,13 +184,10 @@ export class ApiClient<T extends ApiEndpoints> {
   public addResponseInterceptor(interceptor: ResponseInterceptor): number {
     this.options.responseInterceptors = this.options.responseInterceptors || [];
     this.options.responseInterceptors.push(interceptor);
-    
-    const id = this.http.interceptors.response.use(
-      interceptor,
-      this.createErrorHandler()
-    );
+
+    const id = this.http.interceptors.response.use(interceptor, this.createErrorHandler());
     this.interceptorIds.push(id);
-    
+
     return id;
   }
 
@@ -228,7 +223,7 @@ export class ApiClient<T extends ApiEndpoints> {
 
 /**
  * Create a typed API client instance with direct access to API endpoints
- * 
+ *
  * @param endpoints - Record of API endpoint constructors or instances
  * @param baseUrl - Base URL for API requests
  * @param options - Additional client options
@@ -237,11 +232,11 @@ export class ApiClient<T extends ApiEndpoints> {
 export function createApiClient<T extends ApiEndpoints & object>(
   endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>,
   baseUrl = '',
-  options = {}
+  options = {},
 ): T & ApiClientMethods {
   const client = new ApiClient<T>(endpoints, {
     baseUrl,
-    ...options
+    ...options,
   });
 
   // Create a proxy that handles both API endpoints and client methods
@@ -276,6 +271,6 @@ export function createApiClient<T extends ApiEndpoints & object>(
       }
 
       return undefined;
-    }
+    },
   });
 }

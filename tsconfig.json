@@ -10,9 +10,6 @@
     "composite": true,
     "forceConsistentCasingInFileNames": true
   },
-  "references": [
-    { "path": "./packages/common" },
-    { "path": "./packages/client" }
-  ],
+  "references": [{ "path": "./packages/common" }, { "path": "./packages/client" }],
   "files": []
 }

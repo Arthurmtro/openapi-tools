@@ -5,10 +5,7 @@
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "bin"
-  ],
+  "files": ["dist", "bin"],
   "publishConfig": {
     "access": "public"
   },
@@ -18,13 +15,7 @@
     "url": "https://github.com/arthurmtro/openapi-tools.git",
     "directory": "packages/client"
   },
-  "keywords": [
-    "openapi",
-    "api",
-    "client",
-    "typescript",
-    "generator"
-  ],
+  "keywords": ["openapi", "api", "client", "typescript", "generator"],
   "bin": {
     "openapi-client": "./bin/openapi-client.js"
   },

@@ -24,7 +24,7 @@ export function toKebabCase(str: string): string {
  */
 export function formatName(
   name: string,
-  convention: 'camelCase' | 'kebab-case' | 'PascalCase' = 'camelCase'
+  convention: 'camelCase' | 'kebab-case' | 'PascalCase' = 'camelCase',
 ): string {
   // Split the string into words, handling various delimiters
   const words = name.split(/[-_\s]+/).filter(Boolean);

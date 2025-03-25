@@ -1,5 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "files": {
+    "ignore": ["**/*.{test,spec}.{js,ts}", "**/test/", "/packages/client/test/"]
+  },
   "organizeImports": {
     "enabled": true
   },
@@ -27,8 +30,7 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "semicolons": "always",
-      "trailingComma": "es5"
+      "semicolons": "always"
     }
   }
 }

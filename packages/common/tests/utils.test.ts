@@ -1,5 +1,5 @@
+import { describe, expect, it } from 'vitest';
 import { formatName } from '../src/utils';
-import { describe, it, expect } from 'vitest';
 
 describe('formatName', () => {
   it('should convert to camelCase by default', () => {

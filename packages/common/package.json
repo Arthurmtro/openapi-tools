@@ -14,14 +14,8 @@
     "test:watch": "vitest",
     "clean": "rimraf dist"
   },
-  "keywords": [
-    "openapi",
-    "api",
-    "utilities"
-  ],
-  "files": [
-    "dist"
-  ],
+  "keywords": ["openapi", "api", "utilities"],
+  "files": ["dist"],
   "publishConfig": {
     "access": "public"
   }

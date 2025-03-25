@@ -2,7 +2,7 @@
  * Template for generating the apis/index.ts file
  */
 export function generateApisIndexTemplate(
-  apiGroups: Array<{ originalName: string; formattedName: string }>
+  apiGroups: Array<{ originalName: string; formattedName: string }>,
 ): string {
   return apiGroups
     .map((group) => {

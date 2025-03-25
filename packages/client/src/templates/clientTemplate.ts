@@ -6,7 +6,7 @@ export function generateClientTemplate(
   imports: string,
   apiReExports: string,
   apiClientsEntries: string,
-  apiEndpointsProps: string
+  apiEndpointsProps: string,
 ): string {
   return `/**
  * GENERATED CODE - DO NOT MODIFY
