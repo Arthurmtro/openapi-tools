@@ -1,2 +1,8 @@
 packages:
-  - "packages/*"
+  - packages/*
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - '@openapitools/openapi-generator-cli'
+  - esbuild

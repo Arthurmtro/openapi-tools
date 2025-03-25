@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from 'axios';
+import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient, createApiClient } from '../src/apiClient';
 import type {
@@ -12,10 +12,10 @@ import type {
 vi.mock('axios', () => {
   const mockInterceptors = {
     request: {
-      use: vi.fn(() => {
+      use: vi.fn((fn) => {
         // Store the function reference for testing
         mockInterceptors.request.handlers = mockInterceptors.request.handlers || [];
-        mockInterceptors.request.handlers.push();
+        mockInterceptors.request.handlers.push(fn);
         return 1;
       }),
       eject: vi.fn(),
@@ -51,14 +51,17 @@ vi.mock('axios', () => {
 
 // Mock API endpoint
 class MockPetApi implements ApiEndpoint {
-  private axios;
+  private axios: any;
 
-  constructor(axiosInstance?) {
+  constructor(
+    private config?: any,
+    private baseUrl?: string,
+    axiosInstance?: any,
+  ) {
     this.axios = axiosInstance || axios.create();
   }
-  [methodName: string]: (...args: unknown[]) => Promise<unknown>;
 
-  setAxiosInstance(axiosInstance) {
+  setAxiosInstance(axiosInstance: any) {
     this.axios = axiosInstance;
   }
 
@@ -66,7 +69,7 @@ class MockPetApi implements ApiEndpoint {
     return this.axios.get('/pets');
   });
 
-  addPet = vi.fn().mockImplementation((pet) => {
+  addPet = vi.fn().mockImplementation((pet: any) => {
     return this.axios.post('/pets', pet);
   });
 
@@ -77,10 +80,13 @@ class MockPetApi implements ApiEndpoint {
 
 // Mock API endpoint without setAxiosInstance method
 class MockUserApi implements ApiEndpoint {
-  constructor(private axiosInstance?) {}
-  [methodName: string]: (...args: unknown[]) => Promise<unknown>;
+  constructor(
+    private config?: any,
+    private baseUrl?: string,
+    private axiosInstance?: any,
+  ) {}
 
-  request = vi.fn().mockImplementation((config) => {
+  request = vi.fn().mockImplementation((config: any) => {
     return this.axiosInstance ? this.axiosInstance.request(config) : axios.request(config);
   });
 
@@ -94,16 +100,16 @@ class MockUserApi implements ApiEndpoint {
 }
 
 describe('ApiClient', () => {
-  let mockAxiosInstance: AxiosInstance;
+  let mockAxiosInstance: any;
 
   beforeEach(() => {
     mockAxiosInstance = axios.create();
     vi.clearAllMocks();
 
     // Clear stored handlers
-    // if (mockAxiosInstance.interceptors.request.handlers) {
-    // mockAxiosInstance.interceptors.request.handlers = [];
-    // }
+    if (mockAxiosInstance.interceptors.request.handlers) {
+      mockAxiosInstance.interceptors.request.handlers = [];
+    }
   });
 
   afterEach(() => {
