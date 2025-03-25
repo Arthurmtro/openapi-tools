@@ -5,6 +5,11 @@ node_modules/
 dist/
 build/
 
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
+
 # Logs
 logs/
 *.log
@@ -39,3 +44,10 @@ coverage/
 
 # Turborepo
 .turbo/
+
+# Test output directories
+**/test/output/
+
+# Temporary files
+tmp/
+temp/

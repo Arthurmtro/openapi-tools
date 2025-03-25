@@ -2,7 +2,12 @@
 dist/
 build/
 
-# Generated code (especially relevant for the client package)
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
+
+# Generated code
 generated/
 
 # Package specific cache
@@ -11,3 +16,10 @@ generated/
 # Package lock files (when using pnpm workspace)
 package-lock.json
 yarn.lock
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/

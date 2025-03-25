@@ -2,8 +2,17 @@
 dist/
 build/
 
-# Generated code (especially relevant for the client package)
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+tsconfig.build.tsbuildinfo
+
+# Generated code
 generated/
+.openapi-generator/
+
+# Test output
+test/output/
 
 # Package specific cache
 .cache/
@@ -12,5 +21,9 @@ generated/
 package-lock.json
 yarn.lock
 
-# OpenAPI generated code
-.openapi-generator/
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
