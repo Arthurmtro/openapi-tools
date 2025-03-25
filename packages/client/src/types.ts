@@ -17,7 +17,7 @@ export type ResponseInterceptor = (response: AxiosResponse) => AxiosResponse | P
  * Error interceptor function type
  * Allows handling errors from requests or responses
  */
-export type ErrorInterceptor = (error: any) => any | Promise<any>;
+export type ErrorInterceptor = (error: unknown) => unknown | Promise<unknown>;
 
 /**
  * Extended API client options with authentication and interceptor support

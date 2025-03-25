@@ -10,6 +10,29 @@ import {
 } from './templates';
 
 /**
+ * Interface for OpenAPI specification object
+ */
+interface OpenAPISpec {
+  openapi?: string;
+  swagger?: string;
+  info?: {
+    title?: string;
+    version?: string;
+  };
+  paths?: Record<string, unknown>;
+  components?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/**
+ * Interface for API group information
+ */
+interface ApiGroup {
+  originalName: string;
+  formattedName: string;
+}
+
+/**
  * Generates TypeScript client code from OpenAPI specifications
  */
 export class ClientGenerator {
@@ -38,15 +61,15 @@ export class ClientGenerator {
   /**
    * Reads and parses the OpenAPI specification file
    */
-  private async parseSpec(): Promise<Record<string, unknown>> {
+  private async parseSpec(): Promise<OpenAPISpec> {
     const content = await fs.promises.readFile(this.options.specPath, 'utf8');
 
     if (this.options.format === 'yaml') {
       const { load } = await import('js-yaml');
-      return load(content) as Record<string, unknown>;
+      return load(content) as OpenAPISpec;
     }
 
-    return JSON.parse(content);
+    return JSON.parse(content) as OpenAPISpec;
   }
 
   /**
@@ -73,11 +96,11 @@ export class ClientGenerator {
       const generator = spawn('npx', args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
       let stderr = '';
-      generator.stderr.on('data', (data) => {
+      generator.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
-      generator.on('close', (code) => {
+      generator.on('close', (code: number | null) => {
         if (code !== 0) {
           reject(new Error(`OpenAPI Generator failed with code ${code}:\n${stderr}`));
         } else {
@@ -86,7 +109,7 @@ export class ClientGenerator {
         }
       });
 
-      generator.on('error', (err) => {
+      generator.on('error', (err: Error) => {
         reject(new Error(`Failed to run OpenAPI Generator: ${err.message}`));
       });
     });
@@ -97,7 +120,7 @@ export class ClientGenerator {
    */
   private async identifyApiGroups(
     generatedDir: string
-  ): Promise<Array<{ originalName: string; formattedName: string }>> {
+  ): Promise<ApiGroup[]> {
     const apisDir = path.join(generatedDir, 'apis');
     const files = await fs.promises.readdir(apisDir);
 
@@ -122,7 +145,7 @@ export class ClientGenerator {
    */
   private async generateClientWrapper(
     generatedDir: string,
-    apiGroups: Array<{ originalName: string; formattedName: string }>
+    apiGroups: ApiGroup[]
   ): Promise<void> {
     // Calculate relative path to generated code
     const relativeGeneratedPath = path
@@ -154,7 +177,7 @@ export class ClientGenerator {
    * Creates imports for all API classes
    */
   private generateImports(
-    apiGroups: Array<{ originalName: string; formattedName: string }>,
+    apiGroups: ApiGroup[],
     importPath: string
   ): string {
     return apiGroups
@@ -169,7 +192,7 @@ export class ClientGenerator {
    * Creates API_CLIENTS object entries
    */
   private generateApiClientsEntries(
-    apiGroups: Array<{ originalName: string; formattedName: string }>
+    apiGroups: ApiGroup[]
   ): string {
     return apiGroups
       .map((group) => {
@@ -183,7 +206,7 @@ export class ClientGenerator {
    * Creates ApiEndpoints type properties
    */
   private generateApiEndpointsProps(
-    apiGroups: Array<{ originalName: string; formattedName: string }>
+    apiGroups: ApiGroup[]
   ): string {
     return apiGroups
       .map((group) => {
@@ -197,7 +220,7 @@ export class ClientGenerator {
    * Creates API re-exports
    */
   private generateApiReExports(
-    apiGroups: Array<{ originalName: string; formattedName: string }>,
+    apiGroups: ApiGroup[],
     importPath: string
   ): string {
     return apiGroups
@@ -213,7 +236,7 @@ export class ClientGenerator {
    */
   private async createApisIndexFile(
     generatedDir: string,
-    apiGroups: Array<{ originalName: string; formattedName: string }>
+    apiGroups: ApiGroup[]
   ): Promise<void> {
     const apisDir = path.join(generatedDir, 'apis');
     const indexPath = path.join(apisDir, 'index.ts');

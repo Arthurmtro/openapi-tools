@@ -103,7 +103,7 @@ export class ApiClient<T extends ApiEndpoints> {
    * Creates an error handler that applies error interceptors
    */
   private createErrorHandler(): ErrorInterceptor {
-    return async (error: any): Promise<any> => {
+    return async (error: unknown): Promise<unknown> => {
       if (this.options.errorInterceptors?.length) {
         let processedError = error;
         
@@ -246,7 +246,7 @@ export function createApiClient<T extends ApiEndpoints & object>(
 
   // Create a proxy that handles both API endpoints and client methods
   return new Proxy({} as T & ApiClientMethods, {
-    get: (_, prop) => {
+    get: (_, prop: string | symbol) => {
       // Handle client methods
       if (prop === 'configure') {
         return (newOptions: ApiClientOptions) => client.configure(newOptions);
@@ -268,9 +268,11 @@ export function createApiClient<T extends ApiEndpoints & object>(
       }
 
       // Handle API endpoints
-      const key = prop as keyof T;
-      if (key in client.api) {
-        return client.api[key];
+      if (typeof prop === 'string') {
+        const key = prop as keyof T;
+        if (key in client.api) {
+          return client.api[key];
+        }
       }
 
       return undefined;
