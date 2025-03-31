@@ -3,13 +3,13 @@ import { createFetchAdapter } from '../adapters/fetch-adapter';
 
 /**
  * Creates the appropriate HTTP client based on the specified type
- * 
+ *
  * @param type - The type of HTTP client to create
  * @param config - Client configuration options
  * @returns The requested HTTP client implementation
  */
 export function createHttpClient(
-  type: 'fetch' | 'axios' = 'fetch', 
+  type: 'fetch' | 'axios' = 'fetch',
   config: HttpClientConfig = {},
 ): HttpClient {
   switch (type) {
@@ -33,7 +33,7 @@ export function createHttpClient(
 /**
  * Creates the default HTTP client
  * Currently uses fetch as the default implementation
- * 
+ *
  * @param config - Client configuration options
  * @returns The default HTTP client implementation
  */

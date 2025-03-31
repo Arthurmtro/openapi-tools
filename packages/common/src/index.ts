@@ -10,6 +10,4 @@ export * from './http';
 
 // Explicitly re-export from types to avoid ambiguity
 // Only export types that are not already exported by the HTTP module
-export type {
-  ApiClientOptions
-} from './types';
+export type { ApiClientOptions } from './types';

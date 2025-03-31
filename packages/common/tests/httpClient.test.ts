@@ -139,10 +139,11 @@ describe('HttpClient - Fetch Implementation', () => {
     // Add a response interceptor
     const interceptor = vi.fn((response: HttpResponse): HttpResponse => {
       // Handle potential primitive data that can't be spread
-      const originalData = typeof response.data === 'object' && response.data !== null 
-        ? response.data as Record<string, unknown>
-        : {};
-        
+      const originalData =
+        typeof response.data === 'object' && response.data !== null
+          ? (response.data as Record<string, unknown>)
+          : {};
+
       return {
         ...response,
         data: {

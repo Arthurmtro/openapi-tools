@@ -24,6 +24,9 @@
       },
       "style": {
         "useConst": "error"
+      },
+      "complexity": {
+        "noForEach": "error"
       }
     }
   },

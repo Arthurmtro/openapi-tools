@@ -7,14 +7,14 @@ export type {
   HttpClient,
   HttpClientConfig,
   HttpResponse,
-  RequestOptions
+  RequestOptions,
 } from './core/http-types';
 
 // Export HTTP client factory functions
 export {
   createHttpClient,
   createDefaultHttpClient,
-  createAxiosHttpClient
+  createAxiosHttpClient,
 } from './core/http-client';
 
 // Export adapter functions for direct usage

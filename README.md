@@ -6,10 +6,14 @@ A collection of tools for working with OpenAPI specifications in both client and
 
 - 🚀 Generate TypeScript clients from OpenAPI specifications
 - 🌐 HTTP client abstraction with multiple implementations (fetch, axios)
+- 🔄 Advanced request handling with caching, batching, and rate limiting
+- 🔁 Automatic retries for failed requests
 - 🔒 Built-in authentication support
-- 🔄 Request and response interceptors
+- 🔄 Request, response and error interceptors
 - 🛠️ Customizable naming conventions
-- 📦 Minimal dependencies - zero required runtime dependencies for client libraries
+- 📦 Minimal dependencies - zero required runtime dependencies for fetch-based clients
+- 📊 Comprehensive logging with configurable levels
+- ⚡ Performance optimized with tree-shaking support
 
 ## Packages
 

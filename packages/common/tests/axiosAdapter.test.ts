@@ -17,7 +17,7 @@ describe.skip('HttpClient - Axios Implementation', () => {
   // Define properly typed mocks
   type MockedAxiosRequest = Mock<(config: InternalAxiosRequestConfig) => Promise<AxiosResponse>>;
   type MockedInterceptorUse = Mock<(fn: any) => number>;
-  
+
   interface MockedAxiosInstance extends Omit<AxiosInstance, 'request'> {
     request: MockedAxiosRequest;
     interceptors: {
@@ -31,12 +31,12 @@ describe.skip('HttpClient - Axios Implementation', () => {
       };
     };
   }
-  
+
   let mockAxiosInstance: MockedAxiosInstance;
   interface MockedAxiosAdapter extends Omit<AxiosAdapter, 'create'> {
     create: Mock<(config: Partial<InternalAxiosRequestConfig>) => MockedAxiosInstance>;
   }
-  
+
   let mockAxios: MockedAxiosAdapter;
 
   beforeEach(() => {
@@ -45,8 +45,8 @@ describe.skip('HttpClient - Axios Implementation', () => {
       request: vi.fn() as MockedAxiosRequest,
       defaults: {
         headers: {
-          common: {}
-        }
+          common: {},
+        },
       },
       interceptors: {
         request: {
@@ -62,7 +62,9 @@ describe.skip('HttpClient - Axios Implementation', () => {
 
     // Create a mock axios factory
     mockAxios = {
-      create: vi.fn(() => mockAxiosInstance) as Mock<(config: Partial<InternalAxiosRequestConfig>) => MockedAxiosInstance>,
+      create: vi.fn(() => mockAxiosInstance) as Mock<
+        (config: Partial<InternalAxiosRequestConfig>) => MockedAxiosInstance
+      >,
     };
 
     // Mock the require function

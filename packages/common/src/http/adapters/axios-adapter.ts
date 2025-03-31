@@ -1,5 +1,10 @@
 import { createError } from '../../utils/error';
-import type { HttpClient, HttpClientConfig, HttpResponse, RequestOptions } from '../core/http-types';
+import type {
+  HttpClient,
+  HttpClientConfig,
+  HttpResponse,
+  RequestOptions,
+} from '../core/http-types';
 
 // Types for Axios - these are defined inline to avoid requiring axios as a dependency
 // Exporting for testing purposes but these are not part of the public API
@@ -61,7 +66,7 @@ export interface AxiosAdapter {
 /**
  * Creates an Axios-based HTTP client
  * This requires axios to be installed as a dependency
- * 
+ *
  * @param config - Client configuration options
  * @param axiosLib - Optional axios library instance
  * @returns HttpClient implementation using axios
@@ -84,7 +89,7 @@ export function createAxiosAdapter(
       );
     }
   }
-  
+
   // Create axios instance
   const axiosInstance = axios.create({
     // Axios uses baseURL instead of baseUrl
@@ -93,11 +98,11 @@ export function createAxiosAdapter(
     headers: config.headers || {},
     withCredentials: config.withCredentials,
   } as Partial<InternalAxiosRequestConfig>); // Type safe conversion
-  
+
   // Map of interceptor IDs
   const interceptorIds = new Map<number, { type: 'request' | 'response'; id: number }>();
   let interceptorIdCounter = 0;
-  
+
   // Convert axios response to HttpResponse
   function mapAxiosResponse<T>(response: AxiosResponse<T>): HttpResponse<T> {
     return {
@@ -108,7 +113,7 @@ export function createAxiosAdapter(
       config: mapToRequestOptions(response.config),
     };
   }
-  
+
   // Convert RequestOptions to axios config
   function mapToAxiosConfig(options: RequestOptions): InternalAxiosRequestConfig {
     return {
@@ -122,7 +127,7 @@ export function createAxiosAdapter(
       withCredentials: options.withCredentials,
     };
   }
-  
+
   // Convert axios config to RequestOptions
   function mapToRequestOptions(axiosConfig: InternalAxiosRequestConfig): RequestOptions {
     return {
@@ -136,7 +141,7 @@ export function createAxiosAdapter(
       withCredentials: axiosConfig.withCredentials,
     };
   }
-  
+
   // Main request method
   async function request<T = unknown>(requestConfig: RequestOptions): Promise<HttpResponse<T>> {
     try {
@@ -168,7 +173,7 @@ export function createAxiosAdapter(
       });
     }
   }
-  
+
   // HTTP methods
   function get<T = unknown>(
     url: string,
@@ -180,7 +185,7 @@ export function createAxiosAdapter(
       ...config,
     });
   }
-  
+
   function post<T = unknown>(
     url: string,
     data?: unknown,
@@ -193,7 +198,7 @@ export function createAxiosAdapter(
       ...config,
     });
   }
-  
+
   function put<T = unknown>(
     url: string,
     data?: unknown,
@@ -206,7 +211,7 @@ export function createAxiosAdapter(
       ...config,
     });
   }
-  
+
   function patch<T = unknown>(
     url: string,
     data?: unknown,
@@ -219,7 +224,7 @@ export function createAxiosAdapter(
       ...config,
     });
   }
-  
+
   function deleteRequest<T = unknown>(
     url: string,
     config?: Omit<RequestOptions, 'url' | 'method'>,
@@ -230,23 +235,23 @@ export function createAxiosAdapter(
       ...config,
     });
   }
-  
+
   // Interceptor to convert between HttpClient and axios interfaces
   function addRequestInterceptor(
     onFulfilled: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
     onRejected?: (error: unknown) => unknown,
   ): number {
     const id = ++interceptorIdCounter;
-    
+
     // Create adapter for axios interceptor
     const axiosInterceptor = axiosInstance.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
         // Convert axios config to RequestOptions
         const options = mapToRequestOptions(config);
-        
+
         // Apply the interceptor
         const result = await onFulfilled(options);
-        
+
         // Convert back to axios config
         return {
           ...config,
@@ -255,28 +260,28 @@ export function createAxiosAdapter(
       },
       onRejected,
     );
-    
+
     // Store the mapping
     interceptorIds.set(id, { type: 'request', id: axiosInterceptor });
-    
+
     return id;
   }
-  
+
   function addResponseInterceptor(
     onFulfilled: (response: HttpResponse) => HttpResponse | Promise<HttpResponse>,
     onRejected?: (error: unknown) => unknown,
   ): number {
     const id = ++interceptorIdCounter;
-    
+
     // Create adapter for axios interceptor
     const axiosInterceptor = axiosInstance.interceptors.response.use(
       async (response: AxiosResponse) => {
         // Convert axios response to HttpResponse
         const httpResponse = mapAxiosResponse(response);
-        
+
         // Apply the interceptor
         const result = await onFulfilled(httpResponse);
-        
+
         // Return original response with modified data
         return {
           ...response,
@@ -288,26 +293,26 @@ export function createAxiosAdapter(
       },
       onRejected,
     );
-    
+
     // Store the mapping
     interceptorIds.set(id, { type: 'response', id: axiosInterceptor });
-    
+
     return id;
   }
-  
+
   function removeInterceptor(id: number): void {
     const mapping = interceptorIds.get(id);
     if (!mapping) return;
-    
+
     if (mapping.type === 'request') {
       axiosInstance.interceptors.request.eject(mapping.id);
     } else {
       axiosInstance.interceptors.response.eject(mapping.id);
     }
-    
+
     interceptorIds.delete(id);
   }
-  
+
   return {
     request,
     get,

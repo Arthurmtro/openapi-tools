@@ -1,8 +1,5 @@
 {
-  "entryPoints": [
-    "./packages/client/src/index.ts",
-    "./packages/common/src/index.ts"
-  ],
+  "entryPoints": ["./packages/client/src/index.ts", "./packages/common/src/index.ts"],
   "out": "docs",
   "name": "OpenAPI Tools",
   "includeVersion": true,
@@ -14,20 +11,8 @@
   },
   "plugin": ["typedoc-plugin-markdown"],
   "categorizeByGroup": true,
-  "categoryOrder": [
-    "API Client",
-    "HTTP Client",
-    "Generator",
-    "Utilities",
-    "Types",
-    "*"
-  ],
-  "exclude": [
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/test/**",
-    "**/*.test.ts"
-  ],
+  "categoryOrder": ["API Client", "HTTP Client", "Generator", "Utilities", "Types", "*"],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/test/**", "**/*.test.ts"],
   "excludeExternals": true,
   "excludePrivate": true,
   "excludeInternal": true,

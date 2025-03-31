@@ -34,16 +34,16 @@ interface ApiGroup {
 
 /**
  * Class that handles TypeScript client code generation from OpenAPI specifications
- * 
+ *
  * This class encapsulates the logic for:
  * - Parsing OpenAPI specifications (JSON or YAML)
  * - Running the OpenAPI Generator CLI to generate base TypeScript code
  * - Identifying API endpoints from the generated code
  * - Generating client wrapper code with support for interceptors and authentication
- * 
+ *
  * The class is designed to be extensible and configurable, with options for
  * naming conventions, HTTP client libraries, and more.
- * 
+ *
  * @group Generator
  */
 export class ClientGenerator {
@@ -60,7 +60,7 @@ export class ClientGenerator {
         ...options.options,
       },
     };
-    
+
     // Set up console logging with specified log level from options if provided
     const logLevel = options.options?.logLevel || 'info';
     console.log(`Using log level: ${logLevel}`);
@@ -294,17 +294,17 @@ export class ClientGenerator {
 
 /**
  * Generates a TypeScript client from an OpenAPI specification
- * 
+ *
  * This function generates a fully typed TypeScript client for interacting with
  * an API defined by an OpenAPI specification. The generated client includes:
- * 
+ *
  * - Typed API endpoints for all operations defined in the spec
  * - Models for all schemas defined in the spec
  * - A client wrapper with interceptor support
- * 
+ *
  * @param options - Configuration options for the generator
  * @returns A promise that resolves when generation is complete
- * 
+ *
  * @example
  * ```typescript
  * // Generate a client for the Petstore API
@@ -316,13 +316,13 @@ export class ClientGenerator {
  *     httpClient: 'fetch' // Use fetch for minimal dependencies
  *   }
  * });
- * 
+ *
  * // Generated client can be imported and used like:
  * // import { createApiClient, API_CLIENTS } from './src/api';
  * // const client = createApiClient(API_CLIENTS, 'https://petstore.example.com');
  * // const pets = await client.pet.findByStatus('available');
  * ```
- * 
+ *
  * @group Generator
  */
 export async function generateClient(options: GeneratorOptions): Promise<void> {

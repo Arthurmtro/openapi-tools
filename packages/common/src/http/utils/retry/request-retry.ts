@@ -43,7 +43,7 @@ export class RequestRetry {
 
   /**
    * Checks if a request should be retried based on the error and retry count
-   * 
+   *
    * @param error - The error that occurred
    * @param retryCount - The current retry count
    * @param method - The HTTP method used in the failed request
@@ -64,13 +64,17 @@ export class RequestRetry {
     // Check if the error has a status code that should be retried
     const statusCode = this.extractStatusCode(error);
     if (statusCode && this.options.statusCodes.includes(statusCode)) {
-      Logger.debug(`Retrying request due to status code ${statusCode} (attempt ${retryCount + 1}/${this.options.maxRetries})`);
+      Logger.debug(
+        `Retrying request due to status code ${statusCode} (attempt ${retryCount + 1}/${this.options.maxRetries})`,
+      );
       return true;
     }
 
     // Check for network errors (e.g., connection refused, timeout)
     if (this.isNetworkError(error)) {
-      Logger.debug(`Retrying request due to network error (attempt ${retryCount + 1}/${this.options.maxRetries})`);
+      Logger.debug(
+        `Retrying request due to network error (attempt ${retryCount + 1}/${this.options.maxRetries})`,
+      );
       return true;
     }
 
@@ -79,7 +83,7 @@ export class RequestRetry {
 
   /**
    * Calculates the delay before the next retry attempt
-   * 
+   *
    * @param retryCount - The current retry count
    * @param error - The error that occurred
    * @returns The delay in milliseconds
@@ -90,22 +94,20 @@ export class RequestRetry {
     }
 
     // Use exponential backoff with jitter by default
-    const baseDelay = typeof this.options.retryDelay === 'number' 
-      ? this.options.retryDelay 
-      : 1000;
-    
+    const baseDelay = typeof this.options.retryDelay === 'number' ? this.options.retryDelay : 1000;
+
     // Calculate exponential backoff: baseDelay * 2^retryCount
     const delay = baseDelay * Math.pow(2, retryCount);
-    
+
     // Add jitter to prevent all clients retrying simultaneously
     const jitter = delay * 0.2 * Math.random();
-    
+
     return delay + jitter;
   }
 
   /**
    * Extracts the HTTP status code from an error object
-   * 
+   *
    * @param error - The error to examine
    * @returns The status code if found, undefined otherwise
    */
@@ -140,7 +142,7 @@ export class RequestRetry {
 
   /**
    * Checks if an error is a network error
-   * 
+   *
    * @param error - The error to examine
    * @returns Whether the error is a network error
    */
@@ -158,9 +160,9 @@ export class RequestRetry {
       'etimedout',
       'econnrefused',
       'econnreset',
-      'dns lookup failed'
+      'dns lookup failed',
     ];
 
-    return networkErrorPatterns.some(pattern => errorString.includes(pattern));
+    return networkErrorPatterns.some((pattern) => errorString.includes(pattern));
   }
 }

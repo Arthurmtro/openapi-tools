@@ -14,7 +14,7 @@ export function createError(
   details?: unknown,
 ): Error & { status?: number; code?: string; details?: unknown } {
   const error = new Error(message);
-  
+
   // Add additional properties
   if (status !== undefined) {
     Object.defineProperty(error, 'status', {
@@ -23,7 +23,7 @@ export function createError(
       writable: true,
     });
   }
-  
+
   if (code !== undefined) {
     Object.defineProperty(error, 'code', {
       value: code,
@@ -31,7 +31,7 @@ export function createError(
       writable: true,
     });
   }
-  
+
   if (details !== undefined) {
     Object.defineProperty(error, 'details', {
       value: details,
@@ -39,6 +39,6 @@ export function createError(
       writable: true,
     });
   }
-  
+
   return error as Error & { status?: number; code?: string; details?: unknown };
 }
