@@ -49,6 +49,40 @@ This example app demonstrates the key features of the OpenAPI Tools library, par
 
 7. Open your browser and navigate to `http://localhost:5173`
 
+## Important Notes on Package Usage
+
+When using the OpenAPI Tools library in your own projects, there are two main approaches:
+
+### 1. Using the OpenAPI Generator CLI
+
+The recommended way to use the library is through the OpenAPI Generator CLI:
+
+```bash
+npx @arthurmtro/openapi-tools-client generate -i your-api-spec.yaml -o ./src/api --with-debounce --with-enhanced-logger
+```
+
+This will generate a complete client API with all the necessary types and utilities, properly configured.
+
+### 2. Direct Import of the Library (as shown in this example)
+
+For demonstration purposes, this example directly imports the core functionality:
+
+```typescript
+import { createHttpClient } from '@arthurmtro/openapi-tools-common'
+
+// Create HTTP client with debounce enabled
+const httpClient = createHttpClient({
+  baseURL: 'https://petstore.swagger.io/v2',
+  debounce: {
+    enabled: true,
+    delay: 300,
+    cancelPending: true
+  }
+})
+```
+
+Note that in this example we implement a simple custom logger rather than using the EnhancedLogger directly due to ESM/CJS compatibility in the development environment. In a production application generated with the CLI, you'll have access to all features without these workarounds.
+
 ## Features Demonstrated
 
 ### Request Debouncing
@@ -59,16 +93,6 @@ The app demonstrates request debouncing by:
 - Configuring debounce behavior with options for delay and maxWait time
 
 Try typing rapidly in the search field to see the debouncing in action. The "API Calls Attempted" counter will increase with each keystroke, but the "API Calls Executed" counter will only increase when the debounce delay has passed without a new keystroke.
-
-### Enhanced Logging
-
-The enhanced logger features:
-- Color-coded log levels (debug, info, warn, error)
-- Timestamp prefixes for each log entry
-- Error classification (NETWORK, TIMEOUT, AUTH, SERVER, etc.)
-- Detailed error formatting with status codes and error details
-
-All logs are displayed in the console panel in the app interface.
 
 ### Request Cancellation
 
@@ -87,17 +111,7 @@ The demo showcases:
 
 The key components of the demo application:
 
-1. **EnhancedLogger Configuration**: 
-   ```typescript
-   const logger = new EnhancedLogger({
-     level: 'debug',
-     prefix: '[PetStore]',
-     colorize: true,
-     timestamp: true
-   })
-   ```
-
-2. **HTTP Client with Debouncing**:
+1. **HTTP Client with Debouncing**:
    ```typescript
    const httpClient = createHttpClient({
      baseURL: 'https://petstore.swagger.io/v2',
@@ -111,7 +125,7 @@ The key components of the demo application:
    })
    ```
 
-3. **Request Interceptor**:
+2. **Request Interceptor**:
    ```typescript
    httpClient.addRequestInterceptor((config) => {
      logger.info(`Making request to ${config.url}`)
@@ -119,12 +133,12 @@ The key components of the demo application:
    })
    ```
 
-4. **Error Interceptor**:
+3. **Error Interceptor**:
    ```typescript
    httpClient.addErrorInterceptor(logger.createErrorInterceptor())
    ```
 
-5. **Cancellation Support**:
+4. **Cancellation Support**:
    ```typescript
    const cancelPendingRequests = () => {
      httpClient.cancelAllRequests()

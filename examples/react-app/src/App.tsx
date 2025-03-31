@@ -1,14 +1,37 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { createHttpClient, EnhancedLogger } from '@arthurmtro/openapi-tools-common'
+import { createHttpClient } from '@arthurmtro/openapi-tools-common'
 
-// Initialize enhanced logger
-const logger = new EnhancedLogger({
+// Create a simple logger since we can't directly import the EnhancedLogger
+const logger = {
   level: 'debug',
   prefix: '[PetStore]',
-  colorize: true,
-  timestamp: true
-})
+  
+  debug(...args: unknown[]) {
+    console.debug(this.prefix, ...args);
+  },
+  
+  info(...args: unknown[]) {
+    console.info(this.prefix, ...args);
+  },
+  
+  warn(...args: unknown[]) {
+    console.warn(this.prefix, ...args);
+  },
+  
+  error(...args: unknown[]) {
+    console.error(this.prefix, ...args);
+    return args[0];
+  },
+  
+  // Simple implementation of error interceptor
+  createErrorInterceptor() {
+    return (error: unknown): Promise<unknown> => {
+      this.error('API request failed:', error);
+      return Promise.reject(error);
+    };
+  }
+};
 
 // Create HTTP client with debounce enabled
 const httpClient = createHttpClient({
@@ -32,7 +55,7 @@ httpClient.addRequestInterceptor((config) => {
   return config
 })
 
-// Add error interceptor using the enhanced logger
+// Add error interceptor using the logger
 httpClient.addErrorInterceptor(logger.createErrorInterceptor())
 
 function App() {
