@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 
-const { program } = require("commander");
-const path = require("node:path");
+import { program } from "commander";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const pkg = require("../package.json");
 
 program
@@ -70,8 +75,8 @@ program
   )
   .action(async (options) => {
     try {
-      // Use dynamic import to load the ES module
-      const { generateClient } = await import("../dist/index.mjs");
+      // Import the module
+      const { generateClient } = await import("../dist/index.js");
       
       // Set up the log level from options
       const logLevel = options.logLevel || 'info';
@@ -175,15 +180,18 @@ program
     "./openapitools.json"
   )
   .action(async (options) => {
-    const fs = require("fs");
+    const fs = await import("node:fs/promises");
     const configPath = path.resolve(process.cwd(), options.file);
     
     try {
       // Check if file already exists
-      if (fs.existsSync(configPath)) {
+      try {
+        await fs.access(configPath);
         console.log(`Configuration file already exists at ${configPath}`);
         console.log("Use --file to specify a different path or delete the existing file.");
         return;
+      } catch (err) {
+        // File doesn't exist, continue with creation
       }
       
       // Create a default configuration
@@ -220,7 +228,7 @@ program
       };
       
       // Write the file
-      fs.writeFileSync(
+      await fs.writeFile(
         configPath, 
         JSON.stringify(defaultConfig, null, 2), 
         { encoding: "utf8" }

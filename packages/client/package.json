@@ -2,36 +2,37 @@
   "name": "@arthurmtro/openapi-tools-client",
   "version": "0.1.0",
   "description": "Lightweight typed API client generator for OpenAPI specifications",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Arthur Monteiro",
   "files": ["dist", "bin"],
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./api": {
       "types": "./dist/api/index.d.ts",
-      "import": "./dist/api/index.mjs",
-      "require": "./dist/api/index.js"
+      "import": "./dist/api/index.js",
+      "require": "./dist/api/index.cjs"
     },
     "./core": {
       "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.mjs",
-      "require": "./dist/core/index.js"
+      "import": "./dist/core/index.js",
+      "require": "./dist/core/index.cjs"
     },
     "./generator": {
       "types": "./dist/generator/index.d.ts",
-      "import": "./dist/generator/index.mjs",
-      "require": "./dist/generator/index.js"
+      "import": "./dist/generator/index.js",
+      "require": "./dist/generator/index.cjs"
     },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.mjs",
-      "require": "./dist/utils/index.js"
+      "import": "./dist/utils/index.js",
+      "require": "./dist/utils/index.cjs"
     }
   },
   "publishConfig": {

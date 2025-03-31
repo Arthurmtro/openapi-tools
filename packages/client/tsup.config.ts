@@ -14,4 +14,9 @@ export default defineConfig({
   splitting: true,
   clean: true,
   treeshake: true,
+  outExtension({ format }) {
+    return {
+      js: format === 'cjs' ? '.cjs' : '.js',
+    };
+  },
 });
