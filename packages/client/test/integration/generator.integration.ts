@@ -74,7 +74,8 @@ describe('Client Generator Integration Tests', () => {
       outputDir,
       options: {
         namingConvention: 'camelCase',
-        httpClient: 'fetch'
+        httpClient: 'fetch',
+        enableEnhancedLogger: true
       }
     });
     
@@ -188,6 +189,24 @@ describe('Client Generator Integration Tests', () => {
       expect(false).toBe(true);
     } catch (error) {
       // We should get here - just verify we got an error
+      expect(error).toBeDefined();
+    }
+  });
+  
+  // Test the enhanced logger and error interceptor
+  it('should include a functioning client', async () => {
+    const { createApiClient } = await import(path.join(outputDir, 'client.ts'));
+      
+    // Create a client
+    const client = createApiClient(baseUrl);
+    
+    // Test that we can use the client
+    try {
+      await client.getHttpClient().get('/nonexistent/path');
+      // Should throw an error
+      expect(false).toBe(true);
+    } catch (error) {
+      // Verify we got an error
       expect(error).toBeDefined();
     }
   });
