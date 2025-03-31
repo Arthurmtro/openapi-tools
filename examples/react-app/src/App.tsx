@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { createHttpClient } from '@arthurmtro/openapi-tools-common'
-import { EnhancedLogger } from '@arthurmtro/openapi-tools-common/dist/utils/logger'
+import { createHttpClient, EnhancedLogger } from '@arthurmtro/openapi-tools-common'
 
 // Initialize enhanced logger
 const logger = new EnhancedLogger({
