@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { createAxiosHttpClient } from '../src/http';
+import { createAxiosHttpClient } from '../src/http/axiosAdapter';
 import type { HttpClient } from '../src/http/types';
 
 // Import the interfaces for better typing
@@ -10,9 +10,8 @@ import type {
   InternalAxiosRequestConfig,
 } from '../src/http/axiosAdapter';
 
-// Since we're dynamically importing axios, we need to mock it differently
-// Instead of mocking the module, we'll directly create a mock object to pass to our adapter
-describe.skip('HttpClient - Axios Implementation', () => {
+// Skip this test suite if running in a CI environment without axios installed
+describe('HttpClient - Axios Implementation', () => {
   let httpClient: HttpClient;
   // Define properly typed mocks
   type MockedAxiosRequest = Mock<(config: InternalAxiosRequestConfig) => Promise<AxiosResponse>>;
@@ -67,18 +66,18 @@ describe.skip('HttpClient - Axios Implementation', () => {
       >,
     };
 
-    // Mock the require function
-    vi.mock('axios', () => mockAxios);
-
     // Create a fresh client with our mock axios
-    httpClient = createAxiosHttpClient({
-      baseUrl: 'https://api.example.com',
-      timeout: 1000,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': 'test-key',
+    httpClient = createAxiosHttpClient(
+      {
+        baseUrl: 'https://api.example.com',
+        timeout: 1000,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': 'test-key',
+        },
       },
-    });
+      mockAxios
+    );
   });
 
   afterEach(() => {

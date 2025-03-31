@@ -48,6 +48,7 @@ export interface InternalAxiosRequestConfig {
   timeout?: number;
   withCredentials?: boolean;
   baseURL?: string; // Addition to support axios
+  signal?: AbortSignal; // Addition to support request cancellation
 }
 
 /**
@@ -120,6 +121,7 @@ export function createAxiosHttpClient(
       responseType: options.responseType,
       timeout: options.timeout,
       withCredentials: options.withCredentials,
+      signal: options.signal,
     };
   }
 
@@ -134,6 +136,7 @@ export function createAxiosHttpClient(
       responseType: axiosConfig.responseType as RequestOptions['responseType'],
       timeout: axiosConfig.timeout,
       withCredentials: axiosConfig.withCredentials,
+      signal: axiosConfig.signal,
     };
   }
 
