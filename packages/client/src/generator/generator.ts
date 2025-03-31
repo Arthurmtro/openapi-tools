@@ -2,12 +2,12 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { formatName } from '@arthurmtro/openapi-tools-common';
+import type { GeneratorOptions } from '../core/types';
 import {
   generateApisIndexTemplate,
   generateClientTemplate,
   generateIndexTemplate,
 } from './templates';
-import type { GeneratorOptions } from './types';
 
 /**
  * Interface for OpenAPI specification object
@@ -44,7 +44,8 @@ export class ClientGenerator {
       format: options.format || this.detectFormat(options.specPath),
       options: {
         namingConvention: options.options?.namingConvention || 'camelCase',
-        httpClient: options.options?.httpClient || 'axios',
+        // Default to fetch to minimize dependencies unless explicitly set to axios
+        httpClient: options.options?.httpClient || 'fetch',
         ...options.options,
       },
     };
@@ -151,6 +152,9 @@ export class ClientGenerator {
       ? relativeGeneratedPath
       : `./${relativeGeneratedPath}`;
 
+    // Determine which HTTP client to use
+    const httpClientType = this.options.options?.httpClient || 'fetch';
+
     // Generate client file
     const clientFilePath = path.join(this.options.outputDir, 'client.ts');
     const clientContent = generateClientTemplate(
@@ -160,12 +164,21 @@ export class ClientGenerator {
       this.generateApiClientsEntries(apiGroups),
       this.generateApiEndpointsProps(apiGroups),
     );
-    await fs.promises.writeFile(clientFilePath, clientContent);
+
+    // Add a note about HTTP client type in the file
+    const contentWithClientNote = clientContent.replace(
+      '// Create a default client instance',
+      `// Create a default client instance\n// Default HTTP client: ${httpClientType}`,
+    );
+
+    await fs.promises.writeFile(clientFilePath, contentWithClientNote);
 
     // Generate index file
     const indexFilePath = path.join(this.options.outputDir, 'index.ts');
     const indexContent = generateIndexTemplate();
     await fs.promises.writeFile(indexFilePath, indexContent);
+
+    console.log(`Generated client with ${httpClientType} HTTP client`);
   }
 
   /**

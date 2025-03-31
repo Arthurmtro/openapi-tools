@@ -55,3 +55,18 @@ export function formatName(
       return words.map((word) => word.toLowerCase()).join('-');
   }
 }
+
+/**
+ * Creates a standard error object with a consistent format
+ */
+export function createError(
+  message: string,
+  status?: number,
+  code?: string,
+  details?: unknown,
+): Error & { status?: number; code?: string; details?: unknown } {
+  const error = new Error(message);
+  // Add additional properties to the error object
+  Object.assign(error, { status, code, details });
+  return error;
+}

@@ -1,31 +1,34 @@
-import axios, {
-  type AxiosInstance,
-  type AxiosRequestConfig,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
-} from 'axios';
+import {
+  type HttpClient,
+  type RequestOptions,
+  createAxiosHttpClient,
+  createDefaultHttpClient,
+} from '@arthurmtro/openapi-tools-common';
 import type {
   ApiClientMethods,
   ApiClientOptions,
   ApiEndpoint,
   ApiEndpointConstructor,
   ApiEndpoints,
+  AnyEndpointClass,
+  AxiosApiEndpointConstructor,
   ErrorInterceptor,
+  HttpApiEndpointConstructor,
   RequestInterceptor,
   ResponseInterceptor,
-} from './types';
+} from '../core/types';
 
 /**
  * API client that provides access to API endpoints
  */
 export class ApiClient<T extends ApiEndpoints> {
-  private http: AxiosInstance;
+  private http: HttpClient;
   private endpoints: T;
   private options: ApiClientOptions;
   private interceptorIds: number[] = [];
 
   constructor(
-    endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>,
+    endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint | AnyEndpointClass>,
     options: ApiClientOptions = {},
   ) {
     this.options = options;
@@ -35,11 +38,39 @@ export class ApiClient<T extends ApiEndpoints> {
   }
 
   /**
-   * Creates an Axios HTTP client instance with the configured options
+   * Creates an HTTP client instance with the configured options
    */
-  private createHttpClient(): AxiosInstance {
-    return axios.create({
-      baseURL: this.options.baseUrl,
+  private createHttpClient(): HttpClient {
+    // Use the provided HTTP client if available
+    if (this.options.httpClient) {
+      return this.options.httpClient;
+    }
+
+    // Create a new HTTP client based on the specified type or default
+    const clientType = this.options.httpClientType || 'fetch';
+    if (clientType === 'axios') {
+      try {
+        return createAxiosHttpClient({
+          baseUrl: this.options.baseUrl,
+          timeout: this.options.timeout || 30000,
+          headers: this.options.headers || {},
+          withCredentials: this.options.withCredentials,
+        });
+      } catch (error) {
+        console.warn('Failed to create Axios HTTP client, falling back to fetch:', error);
+        // Fall back to fetch if axios is not available
+        return createDefaultHttpClient({
+          baseUrl: this.options.baseUrl,
+          timeout: this.options.timeout || 30000,
+          headers: this.options.headers || {},
+          withCredentials: this.options.withCredentials,
+        });
+      }
+    }
+
+    // Default to fetch-based client
+    return createDefaultHttpClient({
+      baseUrl: this.options.baseUrl,
       timeout: this.options.timeout || 30000,
       headers: this.options.headers || {},
       withCredentials: this.options.withCredentials,
@@ -56,7 +87,7 @@ export class ApiClient<T extends ApiEndpoints> {
     // Add request interceptors
     if (this.options.requestInterceptors?.length) {
       for (const interceptor of this.options.requestInterceptors) {
-        const id = this.http.interceptors.request.use(interceptor, this.createErrorHandler());
+        const id = this.http.addRequestInterceptor(interceptor, this.createErrorHandler());
         this.interceptorIds.push(id);
       }
     }
@@ -64,14 +95,14 @@ export class ApiClient<T extends ApiEndpoints> {
     // Add response interceptors
     if (this.options.responseInterceptors?.length) {
       for (const interceptor of this.options.responseInterceptors) {
-        const id = this.http.interceptors.response.use(interceptor, this.createErrorHandler());
+        const id = this.http.addResponseInterceptor(interceptor, this.createErrorHandler());
         this.interceptorIds.push(id);
       }
     }
 
     // Add authentication interceptor if auth is provided
     if (this.options.auth) {
-      const id = this.http.interceptors.request.use(
+      const id = this.http.addRequestInterceptor(
         this.createAuthInterceptor(),
         this.createErrorHandler(),
       );
@@ -83,7 +114,7 @@ export class ApiClient<T extends ApiEndpoints> {
    * Creates an authentication interceptor based on the auth option
    */
   private createAuthInterceptor(): RequestInterceptor {
-    return async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
+    return async (config: RequestOptions): Promise<RequestOptions> => {
       if (!this.options.auth) {
         return config;
       }
@@ -93,7 +124,13 @@ export class ApiClient<T extends ApiEndpoints> {
 
       if (token) {
         // Set the Authorization header
-        config.headers.Authorization = `Bearer ${token}`;
+        return {
+          ...config,
+          headers: {
+            ...config.headers,
+            Authorization: `Bearer ${token}`,
+          },
+        };
       }
 
       return config;
@@ -128,25 +165,86 @@ export class ApiClient<T extends ApiEndpoints> {
    */
   private clearInterceptors(): void {
     for (const id of this.interceptorIds) {
-      this.http.interceptors.request.eject(id);
-      this.http.interceptors.response.eject(id);
+      this.http.removeInterceptor(id);
     }
     this.interceptorIds = [];
   }
 
   /**
+   * Creates an adapter for an Axios-based endpoint
+   * This is for backward compatibility with the OpenAPI Generator
+   */
+  private createAxiosAdapter(httpClient: HttpClient): unknown {
+    return {
+      request: (config: unknown) => {
+        // Convert axios config to our RequestOptions
+        const axiosConfig = config as {
+          url?: string;
+          method?: string;
+          headers?: Record<string, string>;
+          data?: unknown;
+          params?: Record<string, string>;
+          responseType?: string;
+          timeout?: number;
+          withCredentials?: boolean;
+        };
+
+        const requestOptions: RequestOptions = {
+          url: axiosConfig.url || '',
+          method: (axiosConfig.method?.toUpperCase() || 'GET') as RequestOptions['method'],
+          headers: axiosConfig.headers || {},
+          data: axiosConfig.data,
+          params: axiosConfig.params,
+          responseType: axiosConfig.responseType as RequestOptions['responseType'],
+          timeout: axiosConfig.timeout,
+          withCredentials: axiosConfig.withCredentials,
+        };
+
+        // Use our HTTP client
+        return httpClient.request(requestOptions);
+      },
+      defaults: {
+        headers: {
+          common: {},
+        },
+      },
+      interceptors: {
+        request: {
+          use: () => 0,
+          eject: () => {},
+        },
+        response: {
+          use: () => 0,
+          eject: () => {},
+        },
+      },
+    };
+  }
+
+  /**
    * Initializes API endpoints with the HTTP client
    */
-  private initializeEndpoints(endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>): T {
+  private initializeEndpoints(endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint | AnyEndpointClass>): T {
     const initialized = {} as T;
 
     for (const [key, EndpointClass] of Object.entries(endpoints)) {
       if (typeof EndpointClass === 'function') {
-        initialized[key as keyof T] = new (EndpointClass as ApiEndpointConstructor)(
-          undefined,
-          this.options.baseUrl,
-          this.http,
-        ) as T[keyof T];
+        try {
+          // Try to initialize as a modern endpoint with HttpClient
+          initialized[key as keyof T] = new (EndpointClass as HttpApiEndpointConstructor)(
+            undefined,
+            this.options.baseUrl,
+            this.http,
+          ) as T[keyof T];
+        } catch (_error) {
+          // Fall back to initializing as an axios-based endpoint
+          const axiosAdapter = this.createAxiosAdapter(this.http);
+          initialized[key as keyof T] = new (EndpointClass as AxiosApiEndpointConstructor)(
+            undefined,
+            this.options.baseUrl,
+            axiosAdapter,
+          ) as T[keyof T];
+        }
       } else {
         initialized[key as keyof T] = EndpointClass as T[keyof T];
       }
@@ -159,10 +257,28 @@ export class ApiClient<T extends ApiEndpoints> {
    * Reconfigure the client with new options
    */
   public configure(options: ApiClientOptions): void {
-    Object.assign(this.options, options);
-    this.http = this.createHttpClient();
-    this.setupInterceptors();
-    this.endpoints = this.initializeEndpoints(this.endpoints);
+    // Merge options
+    this.options = {
+      ...this.options,
+      ...options,
+      // Preserve existing interceptors unless explicitly overridden
+      requestInterceptors: options.requestInterceptors || this.options.requestInterceptors,
+      responseInterceptors: options.responseInterceptors || this.options.responseInterceptors,
+      errorInterceptors: options.errorInterceptors || this.options.errorInterceptors,
+    };
+
+    // Create a new HTTP client if needed
+    if (
+      options.httpClient ||
+      options.baseUrl ||
+      options.timeout ||
+      options.headers ||
+      options.withCredentials
+    ) {
+      this.http = this.createHttpClient();
+      this.setupInterceptors();
+      this.endpoints = this.initializeEndpoints(this.endpoints);
+    }
   }
 
   /**
@@ -172,7 +288,7 @@ export class ApiClient<T extends ApiEndpoints> {
     this.options.requestInterceptors = this.options.requestInterceptors || [];
     this.options.requestInterceptors.push(interceptor);
 
-    const id = this.http.interceptors.request.use(interceptor, this.createErrorHandler());
+    const id = this.http.addRequestInterceptor(interceptor, this.createErrorHandler());
     this.interceptorIds.push(id);
 
     return id;
@@ -185,7 +301,7 @@ export class ApiClient<T extends ApiEndpoints> {
     this.options.responseInterceptors = this.options.responseInterceptors || [];
     this.options.responseInterceptors.push(interceptor);
 
-    const id = this.http.interceptors.response.use(interceptor, this.createErrorHandler());
+    const id = this.http.addResponseInterceptor(interceptor, this.createErrorHandler());
     this.interceptorIds.push(id);
 
     return id;
@@ -209,7 +325,7 @@ export class ApiClient<T extends ApiEndpoints> {
   /**
    * Get the HTTP client instance
    */
-  public getHttpClient(): AxiosInstance {
+  public getHttpClient(): HttpClient {
     return this.http;
   }
 
@@ -230,7 +346,7 @@ export class ApiClient<T extends ApiEndpoints> {
  * @returns Proxied client with direct access to API endpoints and client methods
  */
 export function createApiClient<T extends ApiEndpoints & object>(
-  endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint>,
+  endpoints: Record<string, ApiEndpointConstructor | ApiEndpoint | AnyEndpointClass>,
   baseUrl = '',
   options = {},
 ): T & ApiClientMethods {
@@ -241,7 +357,7 @@ export function createApiClient<T extends ApiEndpoints & object>(
 
   // Create a proxy that handles both API endpoints and client methods
   return new Proxy({} as T & ApiClientMethods, {
-    get: (_, prop) => {
+    get: (_, prop: string | symbol) => {
       // Handle client methods
       if (prop === 'configure') {
         return (newOptions: ApiClientOptions) => client.configure(newOptions);
@@ -263,9 +379,11 @@ export function createApiClient<T extends ApiEndpoints & object>(
       }
 
       // Handle API endpoints
-      const key = prop as keyof T;
-      if (key in client.api) {
-        return client.api[key];
+      if (typeof prop === 'string') {
+        const key = prop as keyof T;
+        if (key in client.api) {
+          return client.api[key];
+        }
       }
 
       return undefined;

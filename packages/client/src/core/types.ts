@@ -1,26 +1,23 @@
-import type { ApiClientOptions as CommonApiClientOptions } from '@arthurmtro/openapi-tools-common';
 import type {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from 'axios';
+  ApiClientOptions as CommonApiClientOptions,
+  HttpClient,
+  HttpResponse,
+  RequestOptions,
+} from '@arthurmtro/openapi-tools-common';
 
 /**
  * Request interceptor function type
  * Allows modifying or logging requests before they are sent
  */
 export type RequestInterceptor = (
-  config: InternalAxiosRequestConfig,
-) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
+  config: RequestOptions,
+) => RequestOptions | Promise<RequestOptions>;
 
 /**
  * Response interceptor function type
  * Allows modifying or logging responses before they are returned to the caller
  */
-export type ResponseInterceptor = (
-  response: AxiosResponse,
-) => AxiosResponse | Promise<AxiosResponse>;
+export type ResponseInterceptor = (response: HttpResponse) => HttpResponse | Promise<HttpResponse>;
 
 /**
  * Error interceptor function type
@@ -51,6 +48,18 @@ export interface ApiClientOptions extends CommonApiClientOptions {
    * Error interceptors to be applied when requests or responses fail
    */
   errorInterceptors?: Array<ErrorInterceptor>;
+
+  /**
+   * HTTP client to use
+   * If not specified, a default client will be created
+   */
+  httpClient?: HttpClient;
+
+  /**
+   * Type of HTTP client to create if httpClient is not provided
+   * @default 'fetch'
+   */
+  httpClientType?: 'fetch' | 'axios';
 }
 
 /**
@@ -61,11 +70,29 @@ export interface ApiEndpoint {
 }
 
 /**
- * Constructor type for API endpoints
+ * Constructor type for API endpoints that use Axios
+ * This is for backward compatibility with OpenAPI Generator
  */
-export interface ApiEndpointConstructor {
-  new (configuration?: unknown, basePath?: string, axiosInstance?: AxiosInstance): ApiEndpoint;
+export interface AxiosApiEndpointConstructor {
+  new (configuration?: unknown, basePath?: string, axiosInstance?: unknown): ApiEndpoint;
 }
+
+/**
+ * Constructor type for API endpoints that use our HttpClient interface
+ */
+export interface HttpApiEndpointConstructor {
+  new (configuration?: unknown, basePath?: string, httpClient?: HttpClient): ApiEndpoint;
+}
+
+/**
+ * Union type for API endpoint constructors
+ */
+export type ApiEndpointConstructor = AxiosApiEndpointConstructor | HttpApiEndpointConstructor;
+
+/**
+ * Helper type for both endpoint instances and their constructors - used for tests or custom endpoints
+ */
+export type AnyEndpointClass = new (...args: any[]) => { [key: string]: (...args: any[]) => any };
 
 /**
  * Map of API endpoints
@@ -91,7 +118,7 @@ export interface ApiClientMethods {
   /**
    * Get the HTTP client instance
    */
-  getHttpClient: () => AxiosInstance;
+  getHttpClient: () => HttpClient;
 
   /**
    * Add a request interceptor

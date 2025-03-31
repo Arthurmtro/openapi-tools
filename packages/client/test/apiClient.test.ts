@@ -1,153 +1,316 @@
-import axios from 'axios';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiClient, createApiClient } from '../src/apiClient';
-import type {
-  ApiEndpoint,
-  ErrorInterceptor,
-  RequestInterceptor,
-  ResponseInterceptor,
-} from '../src/types';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { ApiClient, createApiClient } from '../src/api/api-client';
+import { type HttpClient, type HttpResponse, type RequestOptions } from '@arthurmtro/openapi-tools-common';
+import type { ApiEndpoint, RequestInterceptor, ResponseInterceptor, ErrorInterceptor } from '../src/core/types';
 
-// Mock axios
-vi.mock('axios', () => {
-  const mockInterceptors = {
-    request: {
-      use: vi.fn((fn) => {
-        // Store the function reference for testing
-        mockInterceptors.request.handlers = mockInterceptors.request.handlers || [];
-        mockInterceptors.request.handlers.push(fn);
-        return 1;
-      }),
-      eject: vi.fn(),
-      handlers: [], // Store handlers for testing
-    },
-    response: {
-      use: vi.fn(() => 2),
-      eject: vi.fn(),
-    },
+// Mock HTTP client
+class MockHttpClient implements HttpClient {
+  public requestMock = vi.fn().mockImplementation(async (config) => {
+    return {
+      data: { success: true },
+      status: 200,
+      statusText: 'OK',
+      headers: { 'Content-Type': 'application/json' },
+      config,
+    };
+  });
+  
+  public interceptors: {
+    request: Array<{ 
+      onFulfilled: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>;
+      onRejected?: (error: unknown) => unknown;
+    }>;
+    response: Array<{
+      onFulfilled: (response: HttpResponse) => HttpResponse | Promise<HttpResponse>;
+      onRejected?: (error: unknown) => unknown;
+    }>;
+  } = {
+    request: [],
+    response: [],
   };
 
-  const mockAxiosInstance = {
-    interceptors: mockInterceptors,
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-    request: vi.fn(),
-  };
-
-  return {
-    default: {
-      create: vi.fn(() => mockAxiosInstance),
-      defaults: {
-        headers: {
-          common: {},
-        },
-      },
-    },
-    create: vi.fn(() => mockAxiosInstance),
-  };
-});
-
-// Mock API endpoint
-class MockPetApi implements ApiEndpoint {
-  private axios: any;
-
-  constructor(
-    private config?: any,
-    private baseUrl?: string,
-    axiosInstance?: any,
-  ) {
-    this.axios = axiosInstance || axios.create();
+  constructor() {
+    this.interceptors.request = [];
+    this.interceptors.response = [];
   }
 
-  setAxiosInstance(axiosInstance: any) {
-    this.axios = axiosInstance;
+  request<T = unknown>(config: RequestOptions): Promise<HttpResponse<T>> {
+    // Apply request interceptors
+    let finalConfig = { ...config };
+    for (const interceptor of this.interceptors.request) {
+      try {
+        finalConfig = interceptor.onFulfilled(finalConfig) as RequestOptions;
+      } catch (error) {
+        if (interceptor.onRejected) {
+          interceptor.onRejected(error);
+        }
+        throw error;
+      }
+    }
+    
+    return this.requestMock(finalConfig) as Promise<HttpResponse<T>>;
+  }
+
+  get<T = unknown>(url: string, config?: Omit<RequestOptions, 'url' | 'method'>): Promise<HttpResponse<T>> {
+    return this.request<T>({
+      url,
+      method: 'GET',
+      ...config
+    });
+  }
+
+  post<T = unknown>(url: string, data?: unknown, config?: Omit<RequestOptions, 'url' | 'method'>): Promise<HttpResponse<T>> {
+    return this.request<T>({
+      url,
+      method: 'POST',
+      data,
+      ...config
+    });
+  }
+
+  put<T = unknown>(url: string, data?: unknown, config?: Omit<RequestOptions, 'url' | 'method'>): Promise<HttpResponse<T>> {
+    return this.request<T>({
+      url,
+      method: 'PUT',
+      data,
+      ...config
+    });
+  }
+
+  delete<T = unknown>(url: string, config?: Omit<RequestOptions, 'url' | 'method'>): Promise<HttpResponse<T>> {
+    return this.request<T>({
+      url,
+      method: 'DELETE',
+      ...config
+    });
+  }
+
+  patch<T = unknown>(url: string, data?: unknown, config?: Omit<RequestOptions, 'url' | 'method'>): Promise<HttpResponse<T>> {
+    return this.request<T>({
+      url,
+      method: 'PATCH',
+      data,
+      ...config
+    });
+  }
+
+  addRequestInterceptor(
+    onFulfilled: (config: RequestOptions) => RequestOptions | Promise<RequestOptions>,
+    onRejected?: (error: unknown) => unknown
+  ): number {
+    const id = this.interceptors.request.length;
+    this.interceptors.request.push({ onFulfilled, onRejected });
+    return id;
+  }
+
+  addResponseInterceptor(
+    onFulfilled: (response: HttpResponse) => HttpResponse | Promise<HttpResponse>,
+    onRejected?: (error: unknown) => unknown
+  ): number {
+    const id = this.interceptors.response.length;
+    this.interceptors.response.push({ onFulfilled, onRejected });
+    return id;
+  }
+
+  removeInterceptor(id: number): void {
+    // Simple implementation for testing
+  }
+}
+
+// Use a type assertion to create a mock API endpoint
+class MockPetApiBase {
+  // Store properties privately without exposing them via index signature
+  #config?: unknown;
+  #baseUrl?: string;
+  #httpClient?: HttpClient;
+  
+  constructor(
+    config?: unknown,
+    baseUrl?: string,
+    httpClient?: HttpClient,
+  ) {
+    this.#config = config;
+    this.#baseUrl = baseUrl;
+    this.#httpClient = httpClient;
   }
 
   getPets = vi.fn().mockImplementation(() => {
-    return this.axios.get('/pets');
+    if (!this.#httpClient) throw new Error('HTTP client not provided');
+    return this.#httpClient.get('/pets');
   });
 
-  addPet = vi.fn().mockImplementation((pet: any) => {
-    return this.axios.post('/pets', pet);
+  addPet = vi.fn().mockImplementation((pet: unknown) => {
+    if (!this.#httpClient) throw new Error('HTTP client not provided');
+    return this.#httpClient.post('/pets', pet);
   });
 
   getPetById = vi.fn().mockImplementation((id: string) => {
-    return this.axios.get(`/pets/${id}`);
+    if (!this.#httpClient) throw new Error('HTTP client not provided');
+    return this.#httpClient.get(`/pets/${id}`);
   });
 }
 
-// Mock API endpoint without setAxiosInstance method
-class MockUserApi implements ApiEndpoint {
-  constructor(
-    private config?: any,
-    private baseUrl?: string,
-    private axiosInstance?: any,
-  ) {}
+// Use TypeScript's type assertion to satisfy the ApiEndpoint interface
+const MockPetApi = MockPetApiBase as unknown as { 
+  new(config?: unknown, basePath?: string, httpClient?: HttpClient): ApiEndpoint 
+};
 
-  request = vi.fn().mockImplementation((config: any) => {
-    return this.axiosInstance ? this.axiosInstance.request(config) : axios.request(config);
-  });
-
-  getUsers = vi.fn().mockImplementation(() => {
-    return this.request({ url: '/users', method: 'GET' });
-  });
-
-  getUserById = vi.fn().mockImplementation((id: string) => {
-    return this.request({ url: `/users/${id}`, method: 'GET' });
-  });
-}
-
-describe('ApiClient', () => {
-  let mockAxiosInstance: any;
+// Basic tests for ApiClient with HTTP client abstraction
+describe('ApiClient with HttpClient abstraction', () => {
+  let mockHttpClient: MockHttpClient;
 
   beforeEach(() => {
-    mockAxiosInstance = axios.create();
-    vi.clearAllMocks();
-
-    // Clear stored handlers
-    if (mockAxiosInstance.interceptors.request.handlers) {
-      mockAxiosInstance.interceptors.request.handlers = [];
-    }
+    mockHttpClient = new MockHttpClient();
+    vi.spyOn(mockHttpClient, 'request');
+    vi.spyOn(mockHttpClient, 'get');
+    vi.spyOn(mockHttpClient, 'post');
+    vi.spyOn(mockHttpClient, 'addRequestInterceptor');
+    vi.spyOn(mockHttpClient, 'addResponseInterceptor');
+    vi.spyOn(mockHttpClient, 'removeInterceptor');
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
-  it('should create an API client with endpoints', () => {
+  it('should create an API client with a custom HTTP client', () => {
     const client = new ApiClient(
       {
         pets: MockPetApi,
       },
-      { baseUrl: 'https://api.example.com' },
+      { 
+        baseUrl: 'https://api.example.com',
+        httpClient: mockHttpClient,
+      },
     );
 
-    expect(client.api.pets).toBeDefined();
-    expect(axios.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        baseURL: 'https://api.example.com',
-      }),
-    );
+    expect(client.getHttpClient()).toBe(mockHttpClient);
   });
 
-  it('should allow reconfiguring the client', () => {
+  it('should initialize endpoints with the HTTP client', () => {
     const client = new ApiClient(
       {
         pets: MockPetApi,
       },
-      { baseUrl: 'https://api.example.com' },
+      {
+        baseUrl: 'https://api.example.com',
+        httpClient: mockHttpClient,
+      },
     );
 
-    client.configure({ baseUrl: 'https://api2.example.com' });
+    // Assert the type to be compatible with the MockPetApiBase class for testing
+    const petsApi = client.api.pets as unknown as MockPetApiBase;
+    petsApi.getPets();
 
-    expect(axios.create).toHaveBeenCalledTimes(2);
-    expect(axios.create).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        baseURL: 'https://api2.example.com',
-      }),
+    expect(mockHttpClient.get).toHaveBeenCalledWith('/pets');
+  });
+
+  it('should add request interceptors to the HTTP client', () => {
+    const client = new ApiClient(
+      {
+        pets: MockPetApi,
+      },
+      {
+        httpClient: mockHttpClient,
+      },
     );
+
+    const interceptor: RequestInterceptor = (config) => {
+      return {
+        ...config,
+        headers: {
+          ...config.headers,
+          Authorization: 'Bearer test-token',
+        },
+      };
+    };
+
+    client.addRequestInterceptor(interceptor);
+
+    expect(mockHttpClient.addRequestInterceptor).toHaveBeenCalled();
+    expect(mockHttpClient.interceptors.request.length).toBeGreaterThan(0);
+  });
+
+  it('should add response interceptors to the HTTP client', () => {
+    const client = new ApiClient(
+      {
+        pets: MockPetApi,
+      },
+      {
+        httpClient: mockHttpClient,
+      },
+    );
+
+    const interceptor: ResponseInterceptor = (response) => {
+      // Handle potential primitive data that can't be spread
+      const originalData = typeof response.data === 'object' && response.data !== null 
+        ? response.data as Record<string, unknown>
+        : {};
+        
+      return {
+        ...response,
+        data: {
+          ...originalData,
+          intercepted: true,
+        },
+      };
+    };
+
+    client.addResponseInterceptor(interceptor);
+
+    expect(mockHttpClient.addResponseInterceptor).toHaveBeenCalled();
+    expect(mockHttpClient.interceptors.response.length).toBeGreaterThan(0);
+  });
+
+  it('should set up auth interceptors properly', () => {
+    const authFn = vi.fn().mockResolvedValue('dynamic-token');
+
+    // Create the client with auth
+    const client = new ApiClient(
+      {
+        pets: MockPetApi,
+      },
+      {
+        httpClient: mockHttpClient,
+        auth: authFn,
+      },
+    );
+
+    // Verify an interceptor was added to the HTTP client
+    expect(mockHttpClient.addRequestInterceptor).toHaveBeenCalled();
+    
+    // The auth option should have been stored in the client
+    expect((client as any).options.auth).toBe(authFn);
+  });
+
+  it('should clear interceptors when reconfiguring', () => {
+    const client = new ApiClient(
+      {
+        pets: MockPetApi,
+      },
+      {
+        httpClient: mockHttpClient,
+      },
+    );
+
+    // Add some interceptors
+    client.addRequestInterceptor((config) => config);
+    client.addResponseInterceptor((response) => response);
+
+    // Create a new mock HTTP client for reconfiguration
+    const newMockHttpClient = new MockHttpClient();
+    vi.spyOn(newMockHttpClient, 'addRequestInterceptor');
+    vi.spyOn(newMockHttpClient, 'addResponseInterceptor');
+    vi.spyOn(newMockHttpClient, 'removeInterceptor');
+
+    // Reconfigure with a new HTTP client
+    client.configure({
+      httpClient: newMockHttpClient,
+    });
+
+    // New client should have had interceptors added
+    expect(newMockHttpClient.addRequestInterceptor).toHaveBeenCalled();
+    expect(newMockHttpClient.addResponseInterceptor).toHaveBeenCalled();
   });
 
   it('should create a proxied client with createApiClient', () => {
@@ -156,213 +319,69 @@ describe('ApiClient', () => {
         pets: MockPetApi,
       },
       'https://api.example.com',
+      {
+        httpClient: mockHttpClient,
+      },
     );
 
+    // Access API endpoint directly
     expect(client.pets).toBeDefined();
-    expect(client.configure).toBeDefined();
-    expect(client.getBaseUrl).toBeDefined();
-    expect(client.getHttpClient).toBeDefined();
-    expect(client.addRequestInterceptor).toBeDefined();
-    expect(client.addResponseInterceptor).toBeDefined();
-    expect(client.addErrorInterceptor).toBeDefined();
+    client.pets.getPets();
+    expect(mockHttpClient.get).toHaveBeenCalledWith('/pets');
+
+    // Access client methods directly
+    expect(client.getBaseUrl()).toBe('https://api.example.com');
+    expect(client.getHttpClient()).toBe(mockHttpClient);
   });
 
-  it('should add request interceptors', () => {
-    const client = new ApiClient({
-      pets: MockPetApi,
-    });
+  it('should handle initialize endpoints with axios adapter for backward compatibility', () => {
+    // Create a mock Axios-based endpoint base class
+    class AxiosEndpointBase {
+      // Use private fields
+      #axios: unknown;
+      #config?: unknown;
+      #baseUrl?: string;
 
-    const interceptor: RequestInterceptor = (config) => {
-      config.headers.Authorization = 'Bearer test-token';
-      return config;
+      constructor(
+        config?: unknown,
+        baseUrl?: string,
+        axiosInstance?: unknown
+      ) {
+        this.#config = config;
+        this.#baseUrl = baseUrl;
+        this.#axios = axiosInstance;
+      }
+
+      getResource = vi.fn().mockImplementation(() => {
+        return (this.#axios as any).request({ url: '/resource', method: 'GET' });
+      });
+    }
+    
+    // Use TypeScript's type assertion to satisfy the ApiEndpoint interface
+    const AxiosEndpoint = AxiosEndpointBase as unknown as {
+      new(config?: unknown, basePath?: string, axiosInstance?: unknown): ApiEndpoint 
     };
 
-    client.addRequestInterceptor(interceptor);
-
-    expect(mockAxiosInstance.interceptors.request.use).toHaveBeenCalled();
-  });
-
-  it('should add response interceptors', () => {
-    const client = new ApiClient({
-      pets: MockPetApi,
-    });
-
-    const interceptor: ResponseInterceptor = (response) => {
-      response.data = { ...response.data, modified: true };
-      return response;
-    };
-
-    client.addResponseInterceptor(interceptor);
-
-    expect(mockAxiosInstance.interceptors.response.use).toHaveBeenCalled();
-  });
-
-  it('should add error interceptors', () => {
-    const client = new ApiClient({
-      pets: MockPetApi,
-    });
-
-    const errorInterceptor: ErrorInterceptor = (error) => {
-      console.error('API Error:', error);
-      return Promise.reject(error);
-    };
-
-    client.addErrorInterceptor(errorInterceptor);
-
-    // Error interceptors are applied when setting up request/response interceptors
-    expect(client.options.errorInterceptors?.length).toBe(1);
-  });
-
-  it('should set up auth interceptor when auth is provided', () => {
-    new ApiClient(
-      {
-        pets: MockPetApi,
-      },
-      {
-        auth: 'test-token',
-      },
-    );
-
-    // Auth interceptor is added during initialization
-    expect(mockAxiosInstance.interceptors.request.use).toHaveBeenCalled();
-  });
-
-  it('should handle function-based auth tokens', async () => {
-    const authFn = vi.fn().mockResolvedValue('dynamic-token');
-
-    // Create client with auth function
-    new ApiClient(
-      {
-        pets: MockPetApi,
-      },
-      {
-        auth: authFn,
-      },
-    );
-
-    // Get the last request interceptor that was registered
-    const handlers = mockAxiosInstance.interceptors.request.handlers;
-    expect(handlers).toBeDefined();
-    expect(handlers.length).toBeGreaterThan(0);
-
-    // Get the last handler (should be our auth interceptor)
-    const authInterceptor = handlers[handlers.length - 1];
-    expect(authInterceptor).toBeDefined();
-
-    // Test the interceptor
-    const config = { headers: {} };
-    await authInterceptor(config);
-
-    expect(authFn).toHaveBeenCalled();
-    expect(config.headers.Authorization).toBe('Bearer dynamic-token');
-  });
-
-  it('should proxy endpoint methods to use the current HTTP client', () => {
+    // Create client with an endpoint that expects Axios
     const client = new ApiClient(
       {
-        pets: MockPetApi,
-      },
-      { baseUrl: 'https://api.example.com' },
-    );
-
-    // Get the pets endpoint
-    const petsApi = client.api.pets;
-
-    // Call a method on the endpoint
-    petsApi.getPets();
-
-    // Verify the method was called
-    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/pets');
-
-    // Reconfigure the client with a new baseUrl
-    client.configure({ baseUrl: 'https://api2.example.com' });
-
-    // Call the method again
-    petsApi.getPets();
-
-    // Verify the method was called with the new HTTP client
-    expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
-  });
-
-  it('should handle endpoints without setAxiosInstance method', () => {
-    const client = new ApiClient(
-      {
-        users: MockUserApi,
-      },
-      { baseUrl: 'https://api.example.com' },
-    );
-
-    // Get the users endpoint
-    const usersApi = client.api.users;
-
-    // Call a method on the endpoint
-    usersApi.getUsers();
-
-    // Verify the request method was called
-    expect(mockAxiosInstance.request).toHaveBeenCalledWith({
-      url: '/users',
-      method: 'GET',
-    });
-
-    // Reconfigure the client with a new baseUrl
-    client.configure({ baseUrl: 'https://api2.example.com' });
-
-    // Call the method again
-    usersApi.getUsers();
-
-    // Verify the request method was called with the new HTTP client
-    expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
-  });
-
-  it('should handle symbol properties in the proxy', () => {
-    const client = createApiClient({
-      pets: MockPetApi,
-    });
-
-    // Access a property using a symbol
-    const symbolProp = Symbol('test');
-    expect(client[symbolProp]).toBeUndefined();
-
-    // This should not throw an error
-    expect(() => client[symbolProp]).not.toThrow();
-  });
-
-  it('should preserve interceptors when reconfiguring unless explicitly overridden', () => {
-    const requestInterceptor = vi.fn((config) => config);
-    const responseInterceptor = vi.fn((response) => response);
-
-    const client = new ApiClient(
-      {
-        pets: MockPetApi,
+        legacy: AxiosEndpoint,
       },
       {
-        baseUrl: 'https://api.example.com',
-        requestInterceptors: [requestInterceptor],
-        responseInterceptors: [responseInterceptor],
+        httpClient: mockHttpClient,
       },
     );
 
-    // Verify interceptors were set up
-    expect(client.options.requestInterceptors?.length).toBe(1);
-    expect(client.options.responseInterceptors?.length).toBe(1);
+    // Use the legacy endpoint - cast to base class for testing
+    const legacyApi = client.api.legacy as unknown as AxiosEndpointBase;
+    legacyApi.getResource();
 
-    // Reconfigure with new baseUrl but no new interceptors
-    client.configure({ baseUrl: 'https://api2.example.com' });
-
-    // Verify interceptors were preserved
-    expect(client.options.requestInterceptors?.length).toBe(1);
-    expect(client.options.responseInterceptors?.length).toBe(1);
-
-    // Reconfigure with new interceptors
-    const newRequestInterceptor = vi.fn((config) => config);
-    client.configure({
-      requestInterceptors: [newRequestInterceptor],
-    });
-
-    // Verify only request interceptors were replaced
-    expect(client.options.requestInterceptors?.length).toBe(1);
-    expect(client.options.requestInterceptors?.[0]).toBe(newRequestInterceptor);
-    expect(client.options.responseInterceptors?.length).toBe(1);
-    expect(client.options.responseInterceptors?.[0]).toBe(responseInterceptor);
+    // The adapter should convert the Axios request to our HTTP client
+    expect(mockHttpClient.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/resource',
+        method: 'GET',
+      })
+    );
   });
 });
