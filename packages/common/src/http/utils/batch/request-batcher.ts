@@ -13,25 +13,25 @@ export interface BatchOptions {
    * @default false
    */
   enabled?: boolean;
-  
+
   /**
    * Maximum batch size
    * @default 10
    */
   maxBatchSize?: number;
-  
+
   /**
    * Debounce time in milliseconds
    * @default 50
    */
   debounceTime?: number;
-  
+
   /**
    * Maximum wait time for a batch in milliseconds
    * @default 200
    */
   maxWaitTime?: number;
-  
+
   /**
    * Custom batch key generator
    * Groups requests with the same key into the same batch
@@ -45,16 +45,19 @@ export interface BatchOptions {
  * Groups similar requests together to reduce API load
  */
 export class RequestBatcher {
-  private batches = new Map<string, {
-    requests: Array<{
-      request: RequestOptions;
-      resolve: (response: HttpResponse) => void;
-      reject: (error: unknown) => void;
-    }>;
-    timer: NodeJS.Timeout | null;
-    createdAt: number;
-  }>();
-  
+  private batches = new Map<
+    string,
+    {
+      requests: Array<{
+        request: RequestOptions;
+        resolve: (response: HttpResponse) => void;
+        reject: (error: unknown) => void;
+      }>;
+      timer: NodeJS.Timeout | null;
+      createdAt: number;
+    }
+  >();
+
   private options: Required<BatchOptions> = {
     enabled: false,
     maxBatchSize: 10,
@@ -62,11 +65,11 @@ export class RequestBatcher {
     maxWaitTime: 200,
     batchKeyGenerator: this.defaultBatchKeyGenerator,
   };
-  
+
   constructor(options: BatchOptions = {}) {
     this.configure(options);
   }
-  
+
   /**
    * Default batch key generator
    * Groups requests by URL path (ignoring query parameters)
@@ -76,7 +79,7 @@ export class RequestBatcher {
     const url = request.url.split('?')[0];
     return `${request.method}:${url}`;
   }
-  
+
   /**
    * Updates batcher configuration
    */
@@ -85,13 +88,13 @@ export class RequestBatcher {
       ...this.options,
       ...options,
     };
-    
+
     // If batching was disabled, process all pending batches
     if (options.enabled === false) {
       this.processPendingBatches();
     }
   }
-  
+
   /**
    * Adds a request to a batch or processes it immediately if batching is disabled
    * @returns A promise that resolves with the response
@@ -102,13 +105,13 @@ export class RequestBatcher {
   ): Promise<HttpResponse<T>> {
     // If batching is disabled, process the request immediately
     if (!this.options.enabled) {
-      return processBatch([request]).then(responses => responses[0]);
+      return processBatch([request]).then((responses) => responses[0]);
     }
-    
+
     return new Promise<HttpResponse<T>>((resolve, reject) => {
       const batchKey = this.options.batchKeyGenerator(request);
       let batch = this.batches.get(batchKey);
-      
+
       // Create a new batch if one doesn't exist
       if (!batch) {
         batch = {
@@ -118,49 +121,51 @@ export class RequestBatcher {
         };
         this.batches.set(batchKey, batch);
       }
-      
+
       // Add the request to the batch
       batch.requests.push({
         request,
         resolve: resolve as (response: HttpResponse) => void,
         reject,
       });
-      
+
       // Clear existing timer when adding a new request
       if (batch.timer) {
         clearTimeout(batch.timer);
         batch.timer = null;
       }
-      
+
       // Process immediately if we've reached max batch size
       if (batch.requests.length >= this.options.maxBatchSize) {
         Logger.debug(`Processing batch of ${batch.requests.length} requests (max size reached)`);
         this.processBatch(batchKey, processBatch);
         return;
       }
-      
+
       // Check if we've exceeded the max wait time
       const waitedTime = Date.now() - batch.createdAt;
       if (waitedTime >= this.options.maxWaitTime) {
-        Logger.debug(`Processing batch of ${batch.requests.length} requests (max wait time reached)`);
+        Logger.debug(
+          `Processing batch of ${batch.requests.length} requests (max wait time reached)`,
+        );
         this.processBatch(batchKey, processBatch);
         return;
       }
-      
+
       // Set a new timer to process the batch after the debounce time
       // or the remaining time until max wait time is reached
       const remainingWaitTime = Math.min(
         this.options.debounceTime,
-        this.options.maxWaitTime - waitedTime
+        this.options.maxWaitTime - waitedTime,
       );
-      
+
       batch.timer = setTimeout(() => {
         Logger.debug(`Processing batch of ${batch.requests.length} requests (timer expired)`);
         this.processBatch(batchKey, processBatch);
       }, remainingWaitTime);
     });
   }
-  
+
   /**
    * Processes a specific batch of requests
    */
@@ -172,46 +177,48 @@ export class RequestBatcher {
     if (!batch || batch.requests.length === 0) {
       return;
     }
-    
+
     // Remove the batch
     this.batches.delete(batchKey);
-    
+
     // Clear any existing timer
     if (batch.timer) {
       clearTimeout(batch.timer);
       batch.timer = null;
     }
-    
+
     // Extract requests and callbacks
     const { requests } = batch;
-    const requestConfigs = requests.map(r => r.request);
-    
+    const requestConfigs = requests.map((r) => r.request);
+
     // Process the batch
     processBatch(requestConfigs)
-      .then(responses => {
+      .then((responses) => {
         // Match responses with requests
         if (responses.length !== requests.length) {
-          Logger.error(`Batch response count (${responses.length}) doesn't match request count (${requests.length})`);
+          Logger.error(
+            `Batch response count (${responses.length}) doesn't match request count (${requests.length})`,
+          );
           // Reject all requests with an error
-          requests.forEach(({ reject }) => {
+          for (const { reject } of requests) {
             reject(new Error('Batch processing failed: response count mismatch'));
-          });
+          }
           return;
         }
-        
+
         // Resolve each request with its corresponding response
-        requests.forEach(({ resolve }, index) => {
-          resolve(responses[index]);
-        });
+        for (let i = 0; i < requests.length; i++) {
+          requests[i].resolve(responses[i]);
+        }
       })
-      .catch(error => {
+      .catch((error) => {
         // Reject all requests with the same error
-        requests.forEach(({ reject }) => {
+        for (const { reject } of requests) {
           reject(error);
-        });
+        }
       });
   }
-  
+
   /**
    * Processes all pending batches
    */
@@ -221,17 +228,17 @@ export class RequestBatcher {
       if (batch && batch.timer) {
         clearTimeout(batch.timer);
         batch.timer = null;
-        
+
         // Reject all requests in the batch
-        batch.requests.forEach(({ reject }) => {
+        for (const { reject } of batch.requests) {
           reject(new Error('Batch processing cancelled: batching was disabled'));
-        });
-        
+        }
+
         this.batches.delete(batchKey);
       }
     }
   }
-  
+
   /**
    * Cancels all pending batches
    */

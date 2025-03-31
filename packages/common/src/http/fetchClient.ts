@@ -204,9 +204,9 @@ export function createFetchHttpClient(config: HttpClientConfig = {}): HttpClient
 
       // Build response object
       const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
+      for (const [key, value] of response.headers.entries()) {
         responseHeaders[key] = value;
-      });
+      }
 
       const httpResponse: HttpResponse<T> = {
         data,
