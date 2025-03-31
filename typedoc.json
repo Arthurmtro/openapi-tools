@@ -1,0 +1,36 @@
+{
+  "entryPoints": [
+    "./packages/client/src/index.ts",
+    "./packages/common/src/index.ts"
+  ],
+  "out": "docs",
+  "name": "OpenAPI Tools",
+  "includeVersion": true,
+  "readme": "README.md",
+  "readme": {
+    "": "./README.md",
+    "client/src": "./packages/client/README.md",
+    "common/src": "./packages/common/README.md"
+  },
+  "plugin": ["typedoc-plugin-markdown"],
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "API Client",
+    "HTTP Client",
+    "Generator",
+    "Utilities",
+    "Types",
+    "*"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/test/**",
+    "**/*.test.ts"
+  ],
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "theme": "default",
+  "hideGenerator": true
+}
