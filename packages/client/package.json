@@ -26,7 +26,10 @@
     "build": "tsc --project tsconfig.build.json && tsup",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "test": "vitest run",
+    "test:unit": "vitest run **/*.test.ts",
+    "test:integration": "vitest run test/integration/*.integration.ts --reporter verbose",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist"
   },
   "dependencies": {
