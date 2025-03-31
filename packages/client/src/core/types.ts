@@ -371,6 +371,62 @@ export interface ApiClientMethods {
    * @param interceptor - The error interceptor function
    */
   addErrorInterceptor: (interceptor: ErrorInterceptor) => void;
+  
+  /**
+   * Enable or disable response caching
+   * 
+   * @param enabled - Whether caching should be enabled
+   * @param options - Additional cache configuration options
+   */
+  configureCaching: (enabled: boolean, options?: { ttl?: number, maxEntries?: number }) => void;
+  
+  /**
+   * Clear the response cache completely or by URL pattern
+   * 
+   * @param urlPattern - Optional URL pattern to clear (supports string or RegExp)
+   */
+  clearCache: (urlPattern?: string | RegExp) => void;
+  
+  /**
+   * Configure rate limiting (throttling) for API requests
+   * 
+   * @param enabled - Whether throttling should be enabled
+   * @param options - Additional throttling configuration options
+   */
+  configureThrottling: (enabled: boolean, options?: { 
+    limit?: number, 
+    interval?: number,
+    strategy?: 'queue' | 'error' 
+  }) => void;
+  
+  /**
+   * Configure automatic retry for failed requests
+   * 
+   * @param enabled - Whether automatic retry should be enabled
+   * @param options - Additional retry configuration options
+   */
+  configureRetry: (enabled: boolean, options?: {
+    maxRetries?: number,
+    statusCodes?: number[]
+  }) => void;
+  
+  /**
+   * Configure request batching for similar requests
+   * 
+   * @param enabled - Whether request batching should be enabled
+   * @param options - Additional batching configuration options
+   */
+  configureBatching: (enabled: boolean, options?: {
+    maxBatchSize?: number,
+    debounceTime?: number
+  }) => void;
+  
+  /**
+   * Set the API client's logger level
+   * 
+   * @param level - The log level to use (silent/error/warn/info/debug)
+   */
+  setLogLevel: (level: 'silent' | 'error' | 'warn' | 'info' | 'debug') => void;
 }
 
 /**
@@ -462,5 +518,120 @@ export interface GeneratorOptions {
      * @default 'fetch'
      */
     httpClient?: 'axios' | 'fetch';
+    
+    /**
+     * Advanced HTTP client options
+     * 
+     * Configure caching, retries, rate limiting, and other advanced features.
+     * These settings will be passed to the HTTP client during initialization.
+     */
+    httpClientOptions?: {
+      /**
+       * Cache options for HTTP requests
+       * 
+       * Configure in-memory caching for HTTP responses to improve performance
+       * and reduce API load.
+       */
+      cache?: {
+        /**
+         * Whether caching is enabled
+         * @default false
+         */
+        enabled?: boolean;
+        
+        /**
+         * TTL (time to live) in milliseconds
+         * @default 60000 (1 minute)
+         */
+        ttl?: number;
+        
+        /**
+         * Maximum number of entries to cache
+         * @default 100
+         */
+        maxEntries?: number;
+        
+        /**
+         * Methods that can be cached
+         * @default ['GET']
+         */
+        methods?: Array<'GET' | 'HEAD' | 'OPTIONS'>;
+      };
+      
+      /**
+       * Retry options for failed requests
+       * 
+       * Configure automatic retries for failed requests to improve resilience.
+       */
+      retry?: {
+        /**
+         * Whether retry is enabled
+         * @default false
+         */
+        enabled?: boolean;
+        
+        /**
+         * Maximum number of retry attempts
+         * @default 3
+         */
+        maxRetries?: number;
+        
+        /**
+         * Status codes that should trigger a retry
+         * @default [408, 429, 500, 502, 503, 504]
+         */
+        statusCodes?: number[];
+      };
+      
+      /**
+       * Throttling options for rate limiting
+       * 
+       * Configure client-side rate limiting to prevent API quota issues.
+       */
+      throttle?: {
+        /**
+         * Whether throttling is enabled
+         * @default false
+         */
+        enabled?: boolean;
+        
+        /**
+         * Maximum number of requests allowed in the specified interval
+         * @default 60
+         */
+        limit?: number;
+        
+        /**
+         * Time interval in milliseconds for the rate limit
+         * @default 60000 (1 minute)
+         */
+        interval?: number;
+        
+        /**
+         * Strategy to use when rate limit is exceeded
+         * @default 'queue'
+         */
+        strategy?: 'queue' | 'error';
+      };
+    };
+    
+    /**
+     * Enable request batching
+     * 
+     * When enabled, similar requests will be batched together to reduce
+     * API load and improve performance.
+     * 
+     * @default false
+     */
+    enableBatching?: boolean;
+    
+    /**
+     * Log level to use for client logging
+     * 
+     * Control the verbosity of logs produced by the client.
+     * 
+     * @default 'info'
+     */
+    logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'debug';
   };
 }

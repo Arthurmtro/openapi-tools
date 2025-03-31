@@ -1,11 +1,119 @@
 /**
- * Base HTTP client configuration options
+ * Cache configuration options for HTTP requests
  */
+export interface CacheOptions {
+  /**
+   * Whether caching is enabled
+   * @default false
+   */
+  enabled?: boolean;
+  
+  /**
+   * Cache key generator function
+   * Takes request options and returns a string key for cache lookup
+   * @default Uses URL + method + sorted query params as key
+   */
+  keyGenerator?: (options: RequestOptions) => string;
+  
+  /**
+   * TTL (time to live) in milliseconds
+   * @default 60000 (1 minute)
+   */
+  ttl?: number;
+  
+  /**
+   * Maximum number of entries to cache
+   * @default 100
+   */
+  maxEntries?: number;
+  
+  /**
+   * Methods that can be cached
+   * @default ['GET']
+   */
+  methods?: Array<'GET' | 'HEAD' | 'OPTIONS'>;
+}
+
+/**
+ * Retry configuration options for failed requests
+ */
+export interface RetryOptions {
+  /**
+   * Whether retry is enabled
+   * @default false
+   */
+  enabled?: boolean;
+  
+  /**
+   * Maximum number of retry attempts
+   * @default 3
+   */
+  maxRetries?: number;
+  
+  /**
+   * Delay between retries in milliseconds or a function to calculate delay
+   * @default 1000
+   */
+  retryDelay?: number | ((retryCount: number, error: unknown) => number);
+  
+  /**
+   * Status codes that should trigger a retry
+   * @default [408, 429, 500, 502, 503, 504]
+   */
+  statusCodes?: number[];
+  
+  /**
+   * Methods that can be retried
+   * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE']
+   */
+  methods?: Array<'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'>;
+}
+
+/**
+ * Options for request throttling and rate limiting
+ */
+export interface ThrottleOptions {
+  /**
+   * Whether throttling is enabled
+   * @default false
+   */
+  enabled?: boolean;
+  
+  /**
+   * Maximum number of requests allowed in the specified interval
+   * @default 60
+   */
+  limit?: number;
+  
+  /**
+   * Time interval in milliseconds for the rate limit
+   * @default 60000 (1 minute)
+   */
+  interval?: number;
+  
+  /**
+   * Strategy to use when rate limit is exceeded
+   * - 'queue': Queue requests and process them when possible
+   * - 'error': Reject requests when rate limit is exceeded
+   * @default 'queue'
+   */
+  strategy?: 'queue' | 'error';
+  
+  /**
+   * Maximum queue size when using 'queue' strategy
+   * @default 100
+   */
+  maxQueueSize?: number;
+}
+
 export interface HttpClientConfig {
   baseUrl?: string;
   timeout?: number;
   headers?: Record<string, string>;
   withCredentials?: boolean;
+  cache?: CacheOptions;
+  retry?: RetryOptions;
+  throttle?: ThrottleOptions;
 }
 
 /**

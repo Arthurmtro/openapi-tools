@@ -60,6 +60,10 @@ export class ClientGenerator {
         ...options.options,
       },
     };
+    
+    // Set up console logging with specified log level from options if provided
+    const logLevel = options.options?.logLevel || 'info';
+    console.log(`Using log level: ${logLevel}`);
   }
 
   /**
