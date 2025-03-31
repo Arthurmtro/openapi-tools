@@ -141,10 +141,10 @@ if (retry.shouldRetry(error, retryCount)) {
 ```typescript
 import { formatName } from '@arthurmtro/openapi-tools-common/utils';
 
-// Format names according to conventions
-const camelCase = formatName('user-profile', 'camelCase'); // "userProfile"
-const kebabCase = formatName('UserProfile', 'kebab-case'); // "user-profile"
-const pascalCase = formatName('user_profile', 'PascalCase'); // "UserProfile"
+// Format names to camelCase
+const camelCase = formatName('user-profile'); // "userProfile"
+const camelCase2 = formatName('UserProfile'); // "userProfile"
+const camelCase3 = formatName('user_profile'); // "userProfile"
 ```
 
 ## Available Submodules
@@ -176,8 +176,7 @@ const pascalCase = formatName('user_profile', 'PascalCase'); // "UserProfile"
 
 ### Formatting
 
-- `formatName(name, convention)`: Formats a name according to a naming convention
-- `toKebabCase(str)`: Converts a string to kebab-case
+- `formatName(name)`: Formats a name to camelCase
 
 ### Error Handling
 

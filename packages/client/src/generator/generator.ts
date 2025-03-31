@@ -42,7 +42,7 @@ interface ApiGroup {
  * - Generating client wrapper code with support for interceptors and authentication
  *
  * The class is designed to be extensible and configurable, with options for
- * naming conventions, HTTP client libraries, and more.
+ * HTTP client libraries, and more.
  *
  * @group Generator
  */
@@ -54,7 +54,6 @@ export class ClientGenerator {
       ...options,
       format: options.format || this.detectFormat(options.specPath),
       options: {
-        namingConvention: options.options?.namingConvention || 'camelCase',
         // Default to fetch to minimize dependencies unless explicitly set to axios
         httpClient: options.options?.httpClient || 'fetch',
         ...options.options,
@@ -148,10 +147,7 @@ export class ClientGenerator {
       .filter((file) => file.endsWith('.ts') && file !== 'index.ts')
       .map((file) => {
         const baseName = path.basename(file, '.ts').replace(/-api$|Api$/, '');
-        const formattedName = formatName(
-          baseName,
-          this.options.options?.namingConvention as 'camelCase' | 'PascalCase' | 'kebab-case',
-        );
+        const formattedName = formatName(baseName);
 
         return {
           originalName: baseName,
@@ -333,7 +329,6 @@ export class ClientGenerator {
  *   specPath: './petstore.yaml',
  *   outputDir: './src/api',
  *   options: {
- *     namingConvention: 'camelCase',
  *     httpClient: 'fetch' // Use fetch for minimal dependencies
  *   }
  * });

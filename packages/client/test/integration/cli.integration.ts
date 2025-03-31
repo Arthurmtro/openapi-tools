@@ -35,7 +35,7 @@ describe('CLI Integration Tests', () => {
     execSync(`chmod +x ${binPath}`);
     
     // Run the CLI command directly
-    const command = `node ${binPath} generate -i ${petStoreSpecPath} -o ${outputDir} --naming camelCase`;
+    const command = `node ${binPath} generate -i ${petStoreSpecPath} -o ${outputDir}`;
     
     try {
       execSync(command, { stdio: 'inherit' });
@@ -51,36 +51,7 @@ describe('CLI Integration Tests', () => {
     expect(fs.existsSync(path.join(outputDir, 'generated/apis'))).toBe(true);
   });
 
-  // Test that we can specify different naming conventions
-  it('should respect the namingConvention option', () => {
-    // Run with kebab-case option
-    const kebabCaseDir = path.join(outputDir, 'kebab-case');
-    if (!fs.existsSync(kebabCaseDir)) {
-      fs.mkdirSync(kebabCaseDir, { recursive: true });
-    }
-    
-    const command = `node ${binPath} generate -i ${petStoreSpecPath} -o ${kebabCaseDir} --naming kebab-case`;
-    
-    try {
-      execSync(command, { stdio: 'inherit' });
-    } catch (error) {
-      console.error('Error running CLI command:', error);
-      throw error;
-    }
-    
-    // Get the client file content to check for kebab-case naming
-    const clientFile = path.join(kebabCaseDir, 'client.ts');
-    expect(fs.existsSync(clientFile)).toBe(true);
-    
-    const clientContent = fs.readFileSync(clientFile, 'utf8');
-    
-    console.log('Kebab case client file exists:', fs.existsSync(clientFile));
-    
-    // For simplicity, we'll just verify that the files were created successfully
-    // This confirms that the CLI command ran with the naming option without error
-    expect(fs.existsSync(path.join(kebabCaseDir, 'generated'))).toBe(true);
-    expect(fs.existsSync(path.join(kebabCaseDir, 'index.ts'))).toBe(true);
-  });
+  // We removed the naming convention features - no need to test different naming conventions
 
   // Test with the JSON format OpenAPI specification
   it('should work with JSON format OpenAPI specifications', () => {

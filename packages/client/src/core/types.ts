@@ -452,7 +452,6 @@ export interface ApiClientMethods {
  *   outputDir: './src/api',
  *   format: 'yaml',
  *   options: {
- *     namingConvention: 'camelCase',
  *     httpClient: 'fetch'
  *   }
  * });
@@ -505,19 +504,6 @@ export interface GeneratorOptions {
    * These options control various aspects of the code generation process.
    */
   options?: {
-    /**
-     * Naming convention for API endpoints
-     *
-     * Controls how API endpoint names are formatted in the generated client.
-     *
-     * - 'camelCase': Use camelCase (e.g., petApi)
-     * - 'kebab-case': Use kebab-case (e.g., pet-api)
-     * - 'PascalCase': Use PascalCase (e.g., PetApi)
-     *
-     * @default 'camelCase'
-     */
-    namingConvention?: 'camelCase' | 'kebab-case' | 'PascalCase';
-
     /**
      * HTTP client library to use in the generated client
      *

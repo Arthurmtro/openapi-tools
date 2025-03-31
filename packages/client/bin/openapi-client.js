@@ -24,11 +24,6 @@ program
     "Format of the OpenAPI specification (json/yaml)"
   )
   .option(
-    "--naming <convention>",
-    "Naming convention (camelCase/kebab-case/PascalCase)",
-    "camelCase"
-  )
-  .option(
     "--http-client <type>",
     "HTTP client to use (fetch/axios)",
     "fetch"
@@ -150,7 +145,6 @@ program
         outputDir: path.resolve(process.cwd(), options.output),
         format: options.format,
         options: {
-          namingConvention: options.naming,
           httpClient: options.httpClient,
           httpClientOptions: Object.keys(httpClientOptions).length > 0 
             ? httpClientOptions 
@@ -201,7 +195,6 @@ program
           "inputSpec": "./openapi.yaml",
           "outputDir": "./src/api",
           "options": {
-            "namingConvention": "camelCase",
             "httpClient": "fetch",
             "httpClientOptions": {
               "cache": {

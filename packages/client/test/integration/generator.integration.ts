@@ -73,7 +73,6 @@ describe('Client Generator Integration Tests', () => {
       specPath: petStoreSpecPath,
       outputDir,
       options: {
-        namingConvention: 'camelCase',
         httpClient: 'fetch',
         enableEnhancedLogger: true
       }
