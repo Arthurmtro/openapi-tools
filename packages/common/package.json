@@ -6,6 +6,48 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./http": {
+      "types": "./dist/http/index.d.ts",
+      "import": "./dist/http/index.js",
+      "require": "./dist/http/index.cjs"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js",
+      "require": "./dist/utils/index.cjs"
+    },
+    "./http/utils": {
+      "types": "./dist/http/utils/index.d.ts",
+      "import": "./dist/http/utils/index.js",
+      "require": "./dist/http/utils/index.cjs"
+    },
+    "./http/utils/cache": {
+      "types": "./dist/http/utils/cache/index.d.ts",
+      "import": "./dist/http/utils/cache/index.js",
+      "require": "./dist/http/utils/cache/index.cjs"
+    },
+    "./http/utils/batch": {
+      "types": "./dist/http/utils/batch/index.d.ts",
+      "import": "./dist/http/utils/batch/index.js",
+      "require": "./dist/http/utils/batch/index.cjs"
+    },
+    "./http/utils/throttle": {
+      "types": "./dist/http/utils/throttle/index.d.ts",
+      "import": "./dist/http/utils/throttle/index.js",
+      "require": "./dist/http/utils/throttle/index.cjs"
+    },
+    "./http/utils/retry": {
+      "types": "./dist/http/utils/retry/index.d.ts",
+      "import": "./dist/http/utils/retry/index.js",
+      "require": "./dist/http/utils/retry/index.cjs"
+    }
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc --project tsconfig.build.json && tsup",

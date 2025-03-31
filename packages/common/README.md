@@ -1,6 +1,6 @@
 # @arthurmtro/openapi-tools-common
 
-Shared utilities and types for OpenAPI tools.
+Shared utilities and types for OpenAPI tools with optimized tree-shaking support.
 
 ## Features
 
@@ -8,6 +8,9 @@ Shared utilities and types for OpenAPI tools.
 - 🌐 HTTP client abstraction layer
 - 🔄 Support for multiple HTTP client implementations
 - 🧰 Common utilities for formatting and error handling
+- 📦 Optimized bundle size with tree-shakable imports
+- 🔄 Advanced request utilities (caching, batching, throttling, retry)
+- 📊 Logging system with configurable levels
 
 ## Installation
 
@@ -51,12 +54,36 @@ const response = await fetchClient.get('/users');
 console.log(response.data);
 ```
 
+### Optimized Imports (Tree-Shakable)
+
+For better bundle size, you can import only what you need:
+
+```typescript
+// Import only HTTP client
+import { createHttpClient } from '@arthurmtro/openapi-tools-common/http';
+
+// Import only caching utilities
+import { RequestCache } from '@arthurmtro/openapi-tools-common/http/utils/cache';
+
+// Import only request throttling
+import { RequestThrottler } from '@arthurmtro/openapi-tools-common/http/utils/throttle';
+
+// Import only request batching
+import { RequestBatcher } from '@arthurmtro/openapi-tools-common/http/utils/batch';
+
+// Import only retry utilities
+import { RequestRetry } from '@arthurmtro/openapi-tools-common/http/utils/retry';
+
+// Import only logger
+import { Logger } from '@arthurmtro/openapi-tools-common/utils';
+```
+
 ### Creating a custom HTTP client
 
 You can implement your own HTTP client by implementing the `HttpClient` interface:
 
 ```typescript
-import { type HttpClient, type RequestOptions, type HttpResponse } from '@arthurmtro/openapi-tools-common';
+import { type HttpClient, type RequestOptions, type HttpResponse } from '@arthurmtro/openapi-tools-common/http';
 
 // Implement a custom HTTP client
 class CustomHttpClient implements HttpClient {
@@ -78,16 +105,57 @@ class CustomHttpClient implements HttpClient {
 }
 ```
 
+### Using advanced HTTP utilities
+
+```typescript
+// Response caching
+import { RequestCache } from '@arthurmtro/openapi-tools-common/http/utils/cache';
+
+const cache = new RequestCache();
+cache.set(requestOptions, responseData);
+const cachedResponse = cache.get(requestOptions);
+
+// Request throttling
+import { RequestThrottler } from '@arthurmtro/openapi-tools-common/http/utils/throttle';
+
+const throttler = new RequestThrottler({ limit: 10, interval: 1000 });
+const result = await throttler.throttle(() => fetchData());
+
+// Request batching
+import { RequestBatcher } from '@arthurmtro/openapi-tools-common/http/utils/batch';
+
+const batcher = new RequestBatcher();
+const response = await batcher.add(requestOptions, processBatchedRequests);
+
+// Request retry
+import { RequestRetry } from '@arthurmtro/openapi-tools-common/http/utils/retry';
+
+const retry = new RequestRetry({ maxRetries: 3 });
+if (retry.shouldRetry(error, retryCount)) {
+  // Retry the request
+}
+```
+
 ### Formatting utilities
 
 ```typescript
-import { formatName } from '@arthurmtro/openapi-tools-common';
+import { formatName } from '@arthurmtro/openapi-tools-common/utils';
 
 // Format names according to conventions
 const camelCase = formatName('user-profile', 'camelCase'); // "userProfile"
 const kebabCase = formatName('UserProfile', 'kebab-case'); // "user-profile"
 const pascalCase = formatName('user_profile', 'PascalCase'); // "UserProfile"
 ```
+
+## Available Submodules
+
+- `@arthurmtro/openapi-tools-common/http` - HTTP client and core types
+- `@arthurmtro/openapi-tools-common/utils` - General utilities and logger
+- `@arthurmtro/openapi-tools-common/http/utils` - All HTTP utilities
+- `@arthurmtro/openapi-tools-common/http/utils/cache` - HTTP response caching
+- `@arthurmtro/openapi-tools-common/http/utils/batch` - Request batching
+- `@arthurmtro/openapi-tools-common/http/utils/throttle` - Request throttling/rate limiting
+- `@arthurmtro/openapi-tools-common/http/utils/retry` - Automatic request retry
 
 ## API Reference
 
@@ -99,6 +167,13 @@ const pascalCase = formatName('user_profile', 'PascalCase'); // "UserProfile"
 - `RequestOptions`: Options for HTTP requests
 - `HttpResponse<T>`: Response from HTTP requests
 
+### HTTP Utilities
+
+- `RequestCache`: Caching mechanism for HTTP responses
+- `RequestBatcher`: Batching mechanism for similar requests
+- `RequestThrottler`: Rate limiting for API requests
+- `RequestRetry`: Automatic retry for failed requests
+
 ### Formatting
 
 - `formatName(name, convention)`: Formats a name according to a naming convention
@@ -107,6 +182,14 @@ const pascalCase = formatName('user_profile', 'PascalCase'); // "UserProfile"
 ### Error Handling
 
 - `createError(message, status?, code?, details?)`: Creates a standardized error object
+
+### Logging
+
+- `Logger`: Centralized logging utility with configurable levels
+
+## Bundle Size Optimization
+
+Using targeted imports allows your bundler to tree-shake unused code, resulting in smaller bundle sizes in your application.
 
 ## License
 
