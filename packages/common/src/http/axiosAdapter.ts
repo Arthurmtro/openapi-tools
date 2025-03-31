@@ -112,31 +112,57 @@ export function createAxiosHttpClient(
 
   // Convert RequestOptions to axios config
   function mapToAxiosConfig(options: RequestOptions): InternalAxiosRequestConfig {
+    // Destructure options to avoid TypeScript error for signal property
+    const {
+      url,
+      method,
+      headers,
+      data,
+      params,
+      responseType,
+      timeout,
+      withCredentials,
+      signal
+    } = options;
+    
     return {
-      url: options.url,
-      method: options.method,
-      headers: options.headers,
-      data: options.data,
-      params: options.params,
-      responseType: options.responseType,
-      timeout: options.timeout,
-      withCredentials: options.withCredentials,
-      signal: options.signal,
+      url,
+      method,
+      headers,
+      data,
+      params,
+      responseType,
+      timeout,
+      withCredentials,
+      signal,
     };
   }
 
   // Convert axios config to RequestOptions
   function mapToRequestOptions(axiosConfig: InternalAxiosRequestConfig): RequestOptions {
+    // Destructure to avoid TypeScript errors
+    const {
+      url = '',
+      method,
+      headers = {},
+      data,
+      params,
+      responseType,
+      timeout,
+      withCredentials,
+      signal
+    } = axiosConfig;
+    
     return {
-      url: axiosConfig.url || '',
-      method: (axiosConfig.method?.toUpperCase() || 'GET') as RequestOptions['method'],
-      headers: axiosConfig.headers || {},
-      data: axiosConfig.data,
-      params: axiosConfig.params,
-      responseType: axiosConfig.responseType as RequestOptions['responseType'],
-      timeout: axiosConfig.timeout,
-      withCredentials: axiosConfig.withCredentials,
-      signal: axiosConfig.signal,
+      url,
+      method: (method?.toUpperCase() || 'GET') as RequestOptions['method'],
+      headers,
+      data,
+      params,
+      responseType: responseType as RequestOptions['responseType'],
+      timeout,
+      withCredentials,
+      signal,
     };
   }
 

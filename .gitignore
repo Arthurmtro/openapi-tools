@@ -47,6 +47,7 @@ coverage/
 
 # Test output directories
 **/test/output/
+**/test/__output__/
 
 # Temporary files
 tmp/

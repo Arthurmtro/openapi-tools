@@ -133,7 +133,14 @@ export class DebounceManager {
       
       // Store the timer details
       const currentTimestamp = Date.now();
-      const newTimer = {
+      
+      // Define newTimer with the maxWaitTimerId field to fix the TypeScript error
+      const newTimer: {
+        timerId: NodeJS.Timeout;
+        token: CancellationToken;
+        timestamp: number;
+        maxWaitTimerId?: NodeJS.Timeout;
+      } = {
         timerId,
         token,
         timestamp: currentTimestamp
@@ -174,7 +181,8 @@ export class DebounceManager {
    * Cancels all pending debounced requests
    */
   cancelAll(): void {
-    for (const [key, { timerId, token, maxWaitTimerId }] of this.timers.entries()) {
+    for (const [key, timer] of this.timers.entries()) {
+      const { timerId, token, maxWaitTimerId } = timer;
       clearTimeout(timerId);
       if (maxWaitTimerId) {
         clearTimeout(maxWaitTimerId);

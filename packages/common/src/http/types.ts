@@ -20,6 +20,10 @@ export interface RequestOptions {
   responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
   timeout?: number;
   withCredentials?: boolean;
+  /**
+   * Optional signal for request cancellation (AbortSignal)
+   */
+  signal?: AbortSignal;
 }
 
 /**

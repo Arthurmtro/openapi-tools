@@ -226,7 +226,7 @@ export function createFetchAdapter(config: HttpClientConfig = {}): HttpClient {
       } else {
         // Fallback for test environments
         Object.keys(response.headers).forEach(key => {
-          const value = response.headers.get?.(key) || String(response.headers[key]);
+          const value = response.headers.get ? response.headers.get(key) : String(response.headers[key as keyof typeof response.headers]);
           if (value) {
             responseHeaders[key] = value;
           }

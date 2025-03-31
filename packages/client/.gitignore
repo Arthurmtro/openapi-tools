@@ -13,6 +13,7 @@ generated/
 
 # Test output
 test/output/
+test/__output__/
 
 # Package specific cache
 .cache/
