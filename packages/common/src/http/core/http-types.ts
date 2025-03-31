@@ -114,6 +114,50 @@ export interface HttpClientConfig {
   cache?: CacheOptions;
   retry?: RetryOptions;
   throttle?: ThrottleOptions;
+  cancellation?: CancellationOptions;
+  debounce?: DebounceOptions;
+}
+
+/**
+ * Options for request cancellation
+ */
+export interface CancellationOptions {
+  /**
+   * Whether cancellation is enabled
+   * @default false
+   */
+  enabled?: boolean;
+}
+
+/**
+ * Options for request debouncing
+ */
+export interface DebounceOptions {
+  /**
+   * Whether debouncing is enabled
+   * @default false
+   */
+  enabled?: boolean;
+  
+  /**
+   * Debounce delay in milliseconds
+   * @default 300
+   */
+  delay?: number;
+  
+  /**
+   * Whether to cancel pending requests when a new one is made
+   * @default true
+   */
+  cancelPending?: boolean;
+  
+  /**
+   * Maximum wait time in milliseconds
+   * If provided, the function will be called after this time even if
+   * new requests keep coming in
+   * @default undefined (no max wait)
+   */
+  maxWait?: number;
 }
 
 /**
@@ -128,6 +172,10 @@ export interface RequestOptions {
   responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
   timeout?: number;
   withCredentials?: boolean;
+  /**
+   * Optional signal for request cancellation (AbortSignal)
+   */
+  signal?: AbortSignal;
 }
 
 /**

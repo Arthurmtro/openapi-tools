@@ -49,6 +49,21 @@ program
     false
   )
   .option(
+    "--with-enhanced-logger",
+    "Generate client with enhanced logger for better error handling",
+    false
+  )
+  .option(
+    "--with-cancellation",
+    "Generate client with request cancellation support",
+    false
+  )
+  .option(
+    "--with-debounce",
+    "Generate client with request debouncing support",
+    false
+  )
+  .option(
     "--log-level <level>",
     "Log level (silent/error/warn/info/debug)",
     "info"
@@ -97,6 +112,34 @@ program
 
       // Generate the client
       console.info("Generating client...");
+      
+      // Enable enhanced logger if requested
+      if (options.withEnhancedLogger) {
+        console.info("Enhanced logger enabled");
+      }
+      
+      // Enable request cancellation if requested
+      if (options.withCancellation) {
+        console.info("Request cancellation support enabled");
+        
+        // Add cancellation configuration
+        httpClientOptions.cancellation = {
+          enabled: true
+        };
+      }
+      
+      // Enable request debouncing if requested
+      if (options.withDebounce) {
+        console.info("Request debouncing support enabled");
+        
+        // Add debounce configuration
+        httpClientOptions.debounce = {
+          enabled: true,
+          delay: 300,
+          cancelPending: true
+        };
+      }
+      
       await generateClient({
         specPath: path.resolve(process.cwd(), options.input),
         outputDir: path.resolve(process.cwd(), options.output),
@@ -108,6 +151,9 @@ program
             ? httpClientOptions 
             : undefined,
           enableBatching: options.withBatching,
+          enableEnhancedLogger: options.withEnhancedLogger,
+          enableCancellation: options.withCancellation,
+          enableDebounce: options.withDebounce,
           logLevel, // Pass the log level to the generator
         },
       });
@@ -158,9 +204,17 @@ program
               },
               "throttle": {
                 "enabled": false
+              },
+              "cancellation": {
+                "enabled": false
+              },
+              "debounce": {
+                "enabled": false
               }
             },
-            "enableBatching": false
+            "enableBatching": false,
+            "enableCancellation": false,
+            "enableDebounce": false
           }
         }
       };

@@ -633,6 +633,39 @@ export interface GeneratorOptions {
      * @default false
      */
     enableBatching?: boolean;
+    
+    /**
+     * Enable enhanced logger
+     * 
+     * When enabled, the client will use an enhanced logger with better error formatting,
+     * error type classification, and colored output. This improves debugging and error
+     * handling, but increases the bundle size.
+     * 
+     * @default false
+     */
+    enableEnhancedLogger?: boolean;
+    
+    /**
+     * Enable request cancellation
+     * 
+     * When enabled, the client will support cancelling in-flight requests using 
+     * AbortController/AbortSignal. This is useful for scenarios like search-as-you-type
+     * or when users navigate away from a page with pending requests.
+     * 
+     * @default false
+     */
+    enableCancellation?: boolean;
+    
+    /**
+     * Enable request debouncing
+     * 
+     * When enabled, the client will include utilities for debouncing API requests.
+     * This is useful for search-as-you-type or other scenarios where you want to 
+     * prevent multiple requests being made in quick succession.
+     * 
+     * @default false
+     */
+    enableDebounce?: boolean;
 
     /**
      * Log level to use for client logging

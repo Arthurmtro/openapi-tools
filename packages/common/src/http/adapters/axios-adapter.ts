@@ -53,6 +53,7 @@ export interface InternalAxiosRequestConfig {
   timeout?: number;
   withCredentials?: boolean;
   baseURL?: string; // Addition to support axios
+  signal?: AbortSignal; // Support for AbortSignal
 }
 
 /**
@@ -125,6 +126,7 @@ export function createAxiosAdapter(
       responseType: options.responseType,
       timeout: options.timeout,
       withCredentials: options.withCredentials,
+      signal: options.signal, // Add AbortSignal for request cancellation
     };
   }
 
@@ -139,6 +141,7 @@ export function createAxiosAdapter(
       responseType: axiosConfig.responseType as RequestOptions['responseType'],
       timeout: axiosConfig.timeout,
       withCredentials: axiosConfig.withCredentials,
+      signal: axiosConfig.signal, // Pass AbortSignal for cancellation
     };
   }
 

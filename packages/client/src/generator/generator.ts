@@ -64,6 +64,12 @@ export class ClientGenerator {
     // Set up console logging with specified log level from options if provided
     const logLevel = options.options?.logLevel || 'info';
     console.log(`Using log level: ${logLevel}`);
+    
+    // Check if enhanced logger is enabled
+    const useEnhancedLogger = options.options?.enableEnhancedLogger || false;
+    if (useEnhancedLogger) {
+      console.log('Enhanced logger enabled: API clients will include detailed error formatting');
+    }
   }
 
   /**
@@ -172,12 +178,27 @@ export class ClientGenerator {
 
     // Generate client file
     const clientFilePath = path.join(this.options.outputDir, 'client.ts');
+    const useEnhancedLogger = !!this.options.options?.enableEnhancedLogger;
+    
+    console.log(`Enhanced logger is ${useEnhancedLogger ? 'enabled' : 'disabled'} for client generation`);
+    
+    // Check if request cancellation is enabled
+    const useCancellation = !!this.options.options?.enableCancellation;
+    console.log(`Request cancellation is ${useCancellation ? 'enabled' : 'disabled'} for client generation`);
+    
+    // Check if request debouncing is enabled
+    const useDebounce = !!this.options.options?.enableDebounce;
+    console.log(`Request debouncing is ${useDebounce ? 'enabled' : 'disabled'} for client generation`);
+    
     const clientContent = generateClientTemplate(
       importPath,
       this.generateImports(apiGroups, importPath),
       this.generateApiReExports(apiGroups, importPath),
       this.generateApiClientsEntries(apiGroups),
       this.generateApiEndpointsProps(apiGroups),
+      useEnhancedLogger,
+      useCancellation,
+      useDebounce,
     );
 
     // Add a note about HTTP client type in the file

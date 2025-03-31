@@ -132,6 +132,8 @@ export function createFetchAdapter(config: HttpClientConfig = {}): HttpClient {
         method: finalConfig.method,
         headers: finalConfig.headers as HeadersInit,
         credentials: finalConfig.withCredentials ? 'include' : 'same-origin',
+        // Add AbortSignal for request cancellation if provided
+        signal: finalConfig.signal,
       };
 
       // Add request body for methods that support it
@@ -209,8 +211,26 @@ export function createFetchAdapter(config: HttpClientConfig = {}): HttpClient {
 
       // Build response object
       const responseHeaders: Record<string, string> = {};
-      for (const [key, value] of response.headers.entries()) {
-        responseHeaders[key] = value;
+      
+      // Handle different headers implementations (browser vs node)
+      if (typeof response.headers.entries === 'function') {
+        // Browser implementation
+        for (const [key, value] of response.headers.entries()) {
+          responseHeaders[key] = value;
+        }
+      } else if (typeof response.headers.forEach === 'function') {
+        // Node implementation
+        response.headers.forEach((value, key) => {
+          responseHeaders[key] = value;
+        });
+      } else {
+        // Fallback for test environments
+        Object.keys(response.headers).forEach(key => {
+          const value = response.headers.get?.(key) || String(response.headers[key]);
+          if (value) {
+            responseHeaders[key] = value;
+          }
+        });
       }
 
       const httpResponse: HttpResponse<T> = {
