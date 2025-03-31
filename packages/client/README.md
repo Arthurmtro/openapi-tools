@@ -21,27 +21,54 @@ npm install @openapi-tools/client
 ### Generating a client
 
 ```typescript
-import { generateClient } from '@openapi-tools/client';
+import { generateClient } from "@openapi-tools/client";
 
 await generateClient({
-  specPath: './petstore.yaml',
-  outputDir: './generated',
+  specPath: "./petstore.yaml",
+  outputDir: "./generated",
   options: {
-    namingConvention: 'camelCase'
-  }
+    namingConvention: "camelCase",
+    // Choose your HTTP client implementation
+    // 'fetch' (default) - Uses native fetch API with zero dependencies
+    // 'axios' - Uses axios (requires axios to be installed)
+    httpClient: "fetch",
+  },
 });
 ```
 
 ### Using the generated client
 
 ```typescript
-import { createApiClient, API_CLIENTS } from './generated';
+import { createApiClient, API_CLIENTS } from "./generated";
 
 // Create a client instance
-const client = createApiClient(API_CLIENTS, 'https://api.example.com');
+const client = createApiClient(API_CLIENTS, "https://api.example.com");
 
 // Use the client
-const pets = await client.pet.findPetsByStatus({ status: 'available' });
+const pets = await client.pet.findPetsByStatus({ status: "available" });
+```
+
+### HTTP Client Options
+
+```typescript
+// Default (uses fetch)
+const client = createApiClient(API_CLIENTS, "https://api.example.com");
+
+// Explicitly choose fetch (no additional dependencies)
+const fetchClient = createApiClient(API_CLIENTS, "https://api.example.com", {
+  httpClientType: "fetch",
+});
+
+// Use axios (requires axios to be installed)
+const axiosClient = createApiClient(API_CLIENTS, "https://api.example.com", {
+  httpClientType: "axios",
+});
+
+// Provide a custom HTTP client implementation
+import { createCustomHttpClient } from "./myHttpClient";
+const customClient = createApiClient(API_CLIENTS, "https://api.example.com", {
+  httpClient: createCustomHttpClient(),
+});
 ```
 
 ### Adding interceptors
@@ -49,19 +76,19 @@ const pets = await client.pet.findPetsByStatus({ status: 'available' });
 ```typescript
 // Add a request interceptor
 client.addRequestInterceptor((config) => {
-  console.log('Request:', config.url);
+  console.log("Request:", config.url);
   return config;
 });
 
 // Add a response interceptor
 client.addResponseInterceptor((response) => {
-  console.log('Response:', response.status);
+  console.log("Response:", response.status);
   return response;
 });
 
 // Add an error interceptor
 client.addErrorInterceptor((error) => {
-  console.error('API Error:', error);
+  console.error("API Error:", error);
   return Promise.reject(error);
 });
 ```
@@ -70,16 +97,50 @@ client.addErrorInterceptor((error) => {
 
 ```typescript
 // Using a static token
-const client = createApiClient(API_CLIENTS, 'https://api.example.com', {
-  auth: 'your-auth-token'
+const client = createApiClient(API_CLIENTS, "https://api.example.com", {
+  auth: "your-auth-token",
 });
 
 // Using a token provider function
-const client = createApiClient(API_CLIENTS, 'https://api.example.com', {
+const client = createApiClient(API_CLIENTS, "https://api.example.com", {
   auth: async () => {
     // Get token from somewhere
-    return 'dynamic-auth-token';
+    return "dynamic-auth-token";
+  },
+});
+```
+
+### Creating a custom HTTP client
+
+If you need a different HTTP client implementation, you can implement the `HttpClient` interface:
+
+```typescript
+import {
+  type HttpClient,
+  type RequestOptions,
+  type HttpResponse,
+} from "@arthurmtro/openapi-tools-common";
+
+// Example using a different HTTP library
+class MyCustomHttpClient implements HttpClient {
+  // Implement all required methods of the HttpClient interface
+  request<T>(config: RequestOptions): Promise<HttpResponse<T>> {
+    // Your implementation
   }
+
+  get<T>(
+    url: string,
+    config?: Omit<RequestOptions, "url" | "method">
+  ): Promise<HttpResponse<T>> {
+    // Your implementation
+  }
+
+  // ... implement other methods
+}
+
+// Use your custom client
+const client = createApiClient(API_CLIENTS, "https://api.example.com", {
+  httpClient: new MyCustomHttpClient(),
 });
 ```
 
@@ -96,7 +157,9 @@ Generates a TypeScript client from an OpenAPI specification.
 - `format`: Format of the OpenAPI specification file (default: detected from file extension)
 - `options`: Additional generator options
   - `namingConvention`: Naming convention for API endpoints (default: 'camelCase')
-  - `httpClient`: HTTP client library to use (default: 'axios')
+  - `httpClient`: HTTP client library to use (default: 'fetch')
+    - 'fetch': Uses native fetch API with no additional dependencies
+    - 'axios': Uses axios HTTP client (requires axios to be installed)
 
 ### `createApiClient(endpoints, baseUrl, options)`
 
@@ -114,6 +177,8 @@ Creates a typed API client instance with direct access to API endpoints.
   - `requestInterceptors`: Array of request interceptors
   - `responseInterceptors`: Array of response interceptors
   - `errorInterceptors`: Array of error interceptors
+  - `httpClient`: Custom HTTP client implementation (must implement HttpClient interface)
+  - `httpClientType`: Type of HTTP client to create if httpClient is not provided ('fetch' or 'axios', default: 'fetch')
 
 ## License
 

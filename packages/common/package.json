@@ -14,9 +14,12 @@
     "test:watch": "vitest",
     "clean": "rimraf dist"
   },
-  "keywords": ["openapi", "api", "utilities"],
+  "keywords": ["openapi", "api", "utilities", "http-client"],
   "files": ["dist"],
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "axios": "^1.8.4"
   }
 }

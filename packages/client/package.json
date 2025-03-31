@@ -31,9 +31,11 @@
   },
   "dependencies": {
     "@arthurmtro/openapi-tools-common": "workspace:*",
-    "axios": "^1.8.4",
     "commander": "^11.1.0",
     "js-yaml": "^4.1.0"
+  },
+  "optionalDependencies": {
+    "axios": "^1.8.4"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.18.4",
