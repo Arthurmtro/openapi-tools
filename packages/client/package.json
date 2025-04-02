@@ -1,15 +1,12 @@
 {
   "name": "@arthurmtro/openapi-tools-client",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "Lightweight typed API client generator for OpenAPI specifications",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Arthur Monteiro",
-  "files": [
-    "dist",
-    "bin"
-  ],
+  "files": ["dist", "bin"],
   "type": "module",
   "exports": {
     ".": {
@@ -48,13 +45,7 @@
     "url": "git+https://github.com/arthurmtro/openapi-tools.git",
     "directory": "packages/client"
   },
-  "keywords": [
-    "openapi",
-    "api",
-    "client",
-    "typescript",
-    "generator"
-  ],
+  "keywords": ["openapi", "api", "client", "typescript", "generator"],
   "bin": {
     "openapi-client": "bin/openapi-client.js"
   },
