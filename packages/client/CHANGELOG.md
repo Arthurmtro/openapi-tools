@@ -1,5 +1,11 @@
 # @arthurmtro/openapi-tools-client
 
+## 0.1.2
+
+### Patch Changes
+
+- 40bdcea: Bundle common package with client to ensure imports work correctly
+
 ## 0.1.1
 
 ### Patch Changes
