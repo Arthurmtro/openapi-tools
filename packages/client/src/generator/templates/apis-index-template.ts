@@ -7,7 +7,8 @@ export function generateApisIndexTemplate(
   return apiGroups
     .map((group) => {
       const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
-      return `export { ${className} } from './${group.originalName}-api';`;
+      // Use formattedName for the file path to ensure no hyphens in import paths
+      return `export { ${className} } from './${group.formattedName}-api';`;
     })
     .join('\n');
 }

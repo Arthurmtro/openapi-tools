@@ -220,7 +220,9 @@ export class ClientGenerator {
     return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
-        return `import { ${className} } from '${importPath}/apis/${group.originalName}-api';`;
+        // Use formatName for the file path to ensure no hyphens in import paths
+        const safeImportPath = `${importPath}/apis/${formatName(group.originalName)}-api`;
+        return `import { ${className} } from '${safeImportPath}';`;
       })
       .join('\n');
   }
@@ -256,7 +258,9 @@ export class ClientGenerator {
     return apiGroups
       .map((group) => {
         const className = `${group.originalName.charAt(0).toUpperCase()}${group.originalName.slice(1)}Api`;
-        return `export { ${className} } from '${importPath}/apis/${group.originalName}-api';`;
+        // Use formatName for the file path to ensure no hyphens in import paths
+        const safeImportPath = `${importPath}/apis/${formatName(group.originalName)}-api`;
+        return `export { ${className} } from '${safeImportPath}';`;
       })
       .join('\n');
   }
@@ -269,6 +273,18 @@ export class ClientGenerator {
     const indexPath = path.join(apisDir, 'index.ts');
     const content = generateApisIndexTemplate(apiGroups);
     await fs.promises.writeFile(indexPath, content);
+    
+    // Rename API files to use camelCase to prevent import errors with kebab-case
+    for (const group of apiGroups) {
+      const oldPath = path.join(apisDir, `${group.originalName}-api.ts`);
+      const newPath = path.join(apisDir, `${group.formattedName}-api.ts`);
+      
+      // Only rename if the paths are different (i.e., originalName contains hyphens)
+      if (oldPath !== newPath && await fs.promises.access(oldPath).then(() => true).catch(() => false)) {
+        console.log(`Renaming API file from ${group.originalName}-api.ts to ${group.formattedName}-api.ts`);
+        await fs.promises.rename(oldPath, newPath);
+      }
+    }
   }
 
   /**
