@@ -1,6 +1,6 @@
 {
   "name": "@arthurmtro/openapi-tools-common",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared utilities for OpenAPI tools",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -56,8 +56,15 @@
     "test:watch": "vitest",
     "clean": "rimraf dist"
   },
-  "keywords": ["openapi", "api", "utilities", "http-client"],
-  "files": ["dist"],
+  "keywords": [
+    "openapi",
+    "api",
+    "utilities",
+    "http-client"
+  ],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
