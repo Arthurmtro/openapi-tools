@@ -69,7 +69,7 @@
     "axios": "^1.8.4"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.18.4",
+    "@openapitools/openapi-generator-cli": "^2.21.3",
     "@types/js-yaml": "^4.0.9"
   }
 }
